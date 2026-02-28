@@ -115,13 +115,14 @@ class MacOSTextInsertion {
 
         // Get cursor position via selected text range
         var selectedRange: AnyObject?
-        AXUIElementCopyAttributeValue(
+        let rangeResult = AXUIElementCopyAttributeValue(
             element,
             kAXSelectedTextRangeAttribute as CFString,
             &selectedRange
         )
 
-        if let rangeValue = selectedRange as! AXValue? {
+        if rangeResult == .success, let rangeObj = selectedRange {
+            let rangeValue = rangeObj as! AXValue
             var cfRange = CFRange()
             if AXValueGetValue(rangeValue, .cfRange, &cfRange) {
                 // Extract context around cursor position
@@ -182,9 +183,13 @@ class MacOSTextInsertion {
             return nil
         }
 
+        // AXUIElementCopyAttributeValue returns AXUIElement as AnyObject on success.
+        // The cast is safe here because the Accessibility API guarantees the type.
+        let appElement = focusedApp as! AXUIElement
+
         var focusedElement: AnyObject?
         guard AXUIElementCopyAttributeValue(
-            focusedApp as! AXUIElement,
+            appElement,
             kAXFocusedUIElementAttribute as CFString,
             &focusedElement
         ) == .success else {

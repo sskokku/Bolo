@@ -136,13 +136,14 @@ struct GeminiClient: TranscriptionProvider {
             throw GeminiError.invalidAPIKey
         }
 
-        guard let url = URL(string: "\(baseURL)/models/\(model):generateContent?key=\(apiKey)") else {
+        guard let url = URL(string: "\(baseURL)/models/\(model):generateContent") else {
             throw GeminiError.invalidResponse
         }
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         urlRequest.timeoutInterval = 30
         urlRequest.httpBody = try JSONEncoder().encode(request)
 

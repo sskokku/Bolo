@@ -5,13 +5,15 @@ import AppKit
 
 /// Manages a floating panel window that shows the recording indicator.
 /// The panel floats above all windows, is draggable, and shows on all Spaces.
-class FloatingToolbarController {
+/// Persists its position via UserDefaults so it restores on relaunch.
+class FloatingToolbarController: NSObject, NSWindowDelegate {
 
     private var window: NSPanel?
     private let appState: AppState
 
     init(appState: AppState) {
         self.appState = appState
+        super.init()
         setupWindow()
     }
 
@@ -34,6 +36,7 @@ class FloatingToolbarController {
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary]
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
+        panel.delegate = self
 
         // Load saved position or center at top of screen
         if let x = UserDefaults.standard.object(forKey: "FloatingToolbar.x") as? CGFloat,
@@ -55,6 +58,15 @@ class FloatingToolbarController {
 
     func hide() {
         window?.orderOut(nil)
+    }
+
+    // MARK: - NSWindowDelegate
+
+    /// Save the toolbar position whenever the user drags it to a new location.
+    func windowDidMove(_ notification: Notification) {
+        guard let origin = window?.frame.origin else { return }
+        UserDefaults.standard.set(origin.x, forKey: "FloatingToolbar.x")
+        UserDefaults.standard.set(origin.y, forKey: "FloatingToolbar.y")
     }
 }
 

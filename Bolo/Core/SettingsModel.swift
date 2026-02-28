@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import ServiceManagement
 
 // MARK: - Settings Keys
 
@@ -72,13 +73,31 @@ class AppSettings: ObservableObject {
     }
 
     @Published var launchAtLogin: Bool {
-        didSet { UserDefaults.standard.set(launchAtLogin, forKey: SettingsKey.launchAtLogin) }
+        didSet {
+            UserDefaults.standard.set(launchAtLogin, forKey: SettingsKey.launchAtLogin)
+            updateLaunchAtLogin(launchAtLogin)
+        }
     }
 
     // MARK: - Computed
 
     var hasValidAPIKey: Bool {
         !apiKey.isEmpty
+    }
+
+    // MARK: - Launch at Login
+
+    private func updateLaunchAtLogin(_ enabled: Bool) {
+        let service = SMAppService.mainApp
+        do {
+            if enabled {
+                try service.register()
+            } else {
+                try service.unregister()
+            }
+        } catch {
+            print("[Bolo] Failed to update launch-at-login: \(error)")
+        }
     }
 
     // MARK: - Init

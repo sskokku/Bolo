@@ -23,7 +23,6 @@
 		9F1BB66F4B4776C2CBC093D9 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E90347294BAFC27BE1D0428 /* HotkeyManager.swift */; };
 		ABF0B54807430E3CBF83E983 /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE88E61994944BD70BCE1C10 /* AudioCapture.swift */; };
 		B29F5289FB0B542828F4CCA4 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B75F04D918BE25D45AC9EF84 /* HistoryView.swift */; };
-		BAA4CA2A3213D719947B49FF /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7E92D4DAF8EB5B6B6D7D23 /* KeychainManager.swift */; };
 		DFEBAB6509761DDE80103F94 /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 711DC145B32EAA3F1A37A117 /* GeminiClient.swift */; };
 		E27F283DABA9EE0373D91FD7 /* FloatingToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE370038657FB147E8545F2 /* FloatingToolbar.swift */; };
 		E4EBA6114A915152B484B684 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC906FD27136AAE22AFCD171 /* SettingsModel.swift */; };
@@ -38,7 +37,6 @@
 		25F20CCBD2500B27CD0B3907 /* BoloApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoloApp.swift; sourceTree = "<group>"; };
 		2EE370038657FB147E8545F2 /* FloatingToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingToolbar.swift; sourceTree = "<group>"; };
 		3678DD668214388C9CE1BAB0 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
-		3A7E92D4DAF8EB5B6B6D7D23 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		4E90347294BAFC27BE1D0428 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		589C5443017029E8A759E6D0 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		6BCC470B51F901FB871CF1A4 /* DictionaryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryEntry.swift; sourceTree = "<group>"; };
@@ -135,7 +133,6 @@
 				FE88E61994944BD70BCE1C10 /* AudioCapture.swift */,
 				2EE370038657FB147E8545F2 /* FloatingToolbar.swift */,
 				4E90347294BAFC27BE1D0428 /* HotkeyManager.swift */,
-				3A7E92D4DAF8EB5B6B6D7D23 /* KeychainManager.swift */,
 				3678DD668214388C9CE1BAB0 /* MenuBarController.swift */,
 				12C3EF136E908A113369C5E0 /* TextInsertion.swift */,
 			);
@@ -237,7 +234,6 @@
 				0A836B5AABB050B1A5127725 /* HistoryManager.swift in Sources */,
 				B29F5289FB0B542828F4CCA4 /* HistoryView.swift in Sources */,
 				9F1BB66F4B4776C2CBC093D9 /* HotkeyManager.swift in Sources */,
-				BAA4CA2A3213D719947B49FF /* KeychainManager.swift in Sources */,
 				2172158196D16CF243D4EF94 /* MenuBarController.swift in Sources */,
 				EDCEE448510AEF6C171969D6 /* OnboardingView.swift in Sources */,
 				E4EBA6114A915152B484B684 /* SettingsModel.swift in Sources */,

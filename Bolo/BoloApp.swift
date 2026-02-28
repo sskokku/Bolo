@@ -33,7 +33,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
     private var textInsertion: MacOSTextInsertion!
     private var geminiClient: GeminiClient?
     private var dictionaryManager: DictionaryManager!
+    private var historyManager: HistoryManager!
     private var recordingTimer: Timer?
+    private var onboardingWindow: NSWindow?
 
     let appState = AppState()
     let settings = AppSettings.shared
@@ -43,6 +45,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupComponents()
         checkPermissions()
+
+        // Show onboarding on first launch
+        if !settings.hasCompletedOnboarding {
+            showOnboarding()
+        }
     }
 
     // MARK: - Setup
@@ -50,6 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
     private func setupComponents() {
         // Initialize managers
         dictionaryManager = DictionaryManager()
+        historyManager = HistoryManager()
         audioCapture = MacOSAudioCapture()
         audioCapture.delegate = self
         textInsertion = MacOSTextInsertion()
@@ -124,12 +132,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 MacOSHotkeyManager.requestAccessibilityPermission()
             }
 
-            // Check API key
+            // Check API key — if missing, open settings to prompt entry
             if !settings.hasValidAPIKey {
                 await MainActor.run {
                     appState.state = .error(.apiKeyMissing)
-                    // Open settings to prompt user to enter API key
-                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    menuBarController.openSettingsWindow()
                 }
             }
         }
@@ -249,6 +256,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                     try textInsertion.insertText(resultText)
                 }
 
+                // Save to transcription history
+                let appContext = textInsertion.getActiveAppContext()
+                let entry = TranscriptionResult(
+                    text: resultText,
+                    mode: mode,
+                    duration: appState.recordingDuration,
+                    appContext: appContext
+                ).toHistoryEntry()
+                historyManager.addEntry(entry)
+
                 // Update dictionary usage for recognized terms
                 for term in dictionaryManager.getTopEntries() {
                     if resultText.localizedCaseInsensitiveContains(term) {
@@ -334,5 +351,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
         } else {
             floatingToolbar.hide()
         }
+    }
+
+    // MARK: - Onboarding
+
+    private func showOnboarding() {
+        let onboardingView = OnboardingView()
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Welcome to Bolo"
+        window.contentView = NSHostingView(rootView: onboardingView)
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        onboardingWindow = window
     }
 }

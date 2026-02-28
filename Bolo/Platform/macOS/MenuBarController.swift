@@ -5,7 +5,7 @@ import AppKit
 /// Updates the icon to reflect the current app state (idle, recording, processing, error).
 ///
 /// Since Bolo is an LSUIElement app (no Dock icon, no standard app menu),
-/// we manage settings/dictionary windows ourselves using NSWindow.
+/// we manage settings/dictionary/history windows ourselves using NSWindow.
 @MainActor
 class MenuBarController: ObservableObject {
 
@@ -13,6 +13,7 @@ class MenuBarController: ObservableObject {
     private let appState: AppState
     private var settingsWindow: NSWindow?
     private var dictionaryWindow: NSWindow?
+    private var historyWindow: NSWindow?
 
     init(appState: AppState) {
         self.appState = appState
@@ -46,6 +47,10 @@ class MenuBarController: ObservableObject {
         let dictionaryItem = NSMenuItem(title: "Dictionary...", action: #selector(openDictionary), keyEquivalent: "d")
         dictionaryItem.target = self
         menu.addItem(dictionaryItem)
+
+        let historyItem = NSMenuItem(title: "History...", action: #selector(openHistory), keyEquivalent: "h")
+        historyItem.target = self
+        menu.addItem(historyItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -91,6 +96,13 @@ class MenuBarController: ObservableObject {
            let statusItem = menu.item(withTag: 100) {
             statusItem.title = "Bolo — \(appState.statusText)"
         }
+    }
+
+    // MARK: - Public Window Access
+
+    /// Open the settings window programmatically (e.g., when API key is missing).
+    func openSettingsWindow() {
+        openSettings()
     }
 
     // MARK: - Menu Actions
@@ -141,6 +153,30 @@ class MenuBarController: ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
 
         dictionaryWindow = window
+    }
+
+    @objc private func openHistory() {
+        if let window = historyWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let historyView = HistoryView()
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Bolo History"
+        window.contentView = NSHostingView(rootView: historyView)
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        historyWindow = window
     }
 
     @objc private func openAbout() {
