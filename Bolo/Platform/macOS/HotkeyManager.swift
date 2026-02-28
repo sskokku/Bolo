@@ -7,7 +7,12 @@ private let logger = Logger(subsystem: "com.bolo.app", category: "HotkeyManager"
 
 /// Manages global hotkey detection for Push-to-Talk and Long-Talk modes.
 ///
-/// Uses a CGEvent tap to intercept keyboard events system-wide.
+/// **Strategy**:  Tries to install a CGEvent tap first (allows consuming events
+/// like Ctrl+Shift+Space so Space doesn't leak through).  If that fails
+/// — typically because Accessibility permission hasn't been granted yet —
+/// falls back to `NSEvent.addGlobalMonitorForEvents` which still works for
+/// modifier-only hotkeys without needing to consume events.
+///
 /// Hotkeys:
 /// - `Ctrl+Shift` (hold both) → Push-to-Talk (record while held, transcribe on release)
 /// - `Ctrl+Shift+Space` → Toggle Long-Talk mode (press to start/stop)
@@ -23,8 +28,18 @@ class MacOSHotkeyManager: @unchecked Sendable {
 
     // MARK: - Private State
 
+    /// CGEvent tap (primary, if available)
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+
+    /// NSEvent global monitors (fallback)
+    private var flagsMonitor: Any?
+    private var keyDownMonitor: Any?
+    private var keyUpMonitor: Any?
+
+    /// Which mechanism is active
+    private(set) var usingEventTap = false
+    private(set) var usingNSEventMonitor = false
 
     /// Tracks whether Ctrl+Shift are currently held together.
     private var isHotkeyHeld = false
@@ -34,17 +49,62 @@ class MacOSHotkeyManager: @unchecked Sendable {
 
     /// The modifier combo we listen for: Control + Shift (no other modifiers).
     private let requiredModifiers: CGEventFlags = [.maskControl, .maskShift]
+    private let requiredNSModifiers: NSEvent.ModifierFlags = [.control, .shift]
 
     /// Mask of all modifier keys we care about (to exclude Cmd, Option, etc.).
     private let allModifiersMask: CGEventFlags = [.maskControl, .maskShift, .maskCommand, .maskAlternate]
+    private let allNSModifiersMask: NSEvent.ModifierFlags = [.control, .shift, .command, .option]
 
     // MARK: - Lifecycle
 
     /// Start listening for global hotkey events.
-    /// - Returns: `true` if the event tap was created successfully
+    ///
+    /// Tries CGEvent tap first (best: can consume events).
+    /// Falls back to NSEvent global monitors if the tap fails.
+    ///
+    /// - Returns: `true` if at least one mechanism started successfully.
     func start() -> Bool {
-        logger.info("Starting hotkey manager — AXIsProcessTrusted: \(AXIsProcessTrusted())")
+        let trusted = AXIsProcessTrusted()
+        logger.info("Starting hotkey manager — AXIsProcessTrusted: \(trusted)")
+        print("[Bolo HotkeyManager] Starting — AXIsProcessTrusted: \(trusted)")
 
+        // --- Attempt 1: CGEvent tap (requires Accessibility) ---
+        if startEventTap() {
+            usingEventTap = true
+            print("[Bolo HotkeyManager] Using CGEvent tap (primary)")
+            logger.info("Using CGEvent tap (primary)")
+            return true
+        }
+
+        // --- Attempt 2: NSEvent global monitors (fallback) ---
+        logger.warning("CGEvent tap failed — falling back to NSEvent global monitors")
+        print("[Bolo HotkeyManager] CGEvent tap failed — trying NSEvent global monitors")
+
+        if startNSEventMonitors() {
+            usingNSEventMonitor = true
+            print("[Bolo HotkeyManager] Using NSEvent global monitors (fallback)")
+            logger.info("Using NSEvent global monitors (fallback)")
+            return true
+        }
+
+        logger.error("Both CGEvent tap and NSEvent monitors failed — hotkeys unavailable")
+        print("[Bolo HotkeyManager] BOTH mechanisms failed — hotkeys unavailable")
+        return false
+    }
+
+    /// Stop listening for hotkey events and clean up all resources.
+    func stop() {
+        stopEventTap()
+        stopNSEventMonitors()
+    }
+
+    deinit {
+        stop()
+    }
+
+    // MARK: - CGEvent Tap (Primary)
+
+    private func startEventTap() -> Bool {
         let eventMask: CGEventMask = (
             (1 << CGEventType.flagsChanged.rawValue) |
             (1 << CGEventType.keyDown.rawValue) |
@@ -61,11 +121,11 @@ class MacOSHotkeyManager: @unchecked Sendable {
                     return Unmanaged.passRetained(event)
                 }
                 let manager = Unmanaged<MacOSHotkeyManager>.fromOpaque(refcon).takeUnretainedValue()
-                return manager.handleEvent(proxy: proxy, type: type, event: event)
+                return manager.handleCGEvent(proxy: proxy, type: type, event: event)
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
-            logger.error("Failed to create CGEvent tap — check Accessibility permission")
+            logger.error("Failed to create CGEvent tap — Accessibility permission likely missing")
             return false
         }
 
@@ -74,12 +134,11 @@ class MacOSHotkeyManager: @unchecked Sendable {
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
 
-        logger.info("Event tap created and enabled successfully")
+        logger.info("CGEvent tap created and enabled")
         return true
     }
 
-    /// Stop listening for hotkey events and clean up resources.
-    func stop() {
+    private func stopEventTap() {
         if let tap = eventTap {
             CGEvent.tapEnable(tap: tap, enable: false)
         }
@@ -88,15 +147,58 @@ class MacOSHotkeyManager: @unchecked Sendable {
         }
         eventTap = nil
         runLoopSource = nil
+        usingEventTap = false
     }
 
-    deinit {
-        stop()
+    // MARK: - NSEvent Global Monitors (Fallback)
+
+    private func startNSEventMonitors() -> Bool {
+        // Monitor modifier key changes (flagsChanged)
+        flagsMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            self?.handleNSFlagsChanged(event)
+        }
+
+        // Monitor key down (for Ctrl+Shift+Space)
+        keyDownMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            self?.handleNSKeyDown(event)
+        }
+
+        // Monitor key up (for Space release tracking)
+        keyUpMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyUp) { [weak self] event in
+            self?.handleNSKeyUp(event)
+        }
+
+        // NSEvent monitors return nil if they fail, but typically they succeed
+        // even without Accessibility for modifier events. Check if at least
+        // the flags monitor was created.
+        if flagsMonitor != nil {
+            logger.info("NSEvent global monitors installed")
+            return true
+        }
+
+        logger.error("Failed to install NSEvent global monitors")
+        return false
     }
 
-    // MARK: - Event Handling
+    private func stopNSEventMonitors() {
+        if let monitor = flagsMonitor {
+            NSEvent.removeMonitor(monitor)
+            flagsMonitor = nil
+        }
+        if let monitor = keyDownMonitor {
+            NSEvent.removeMonitor(monitor)
+            keyDownMonitor = nil
+        }
+        if let monitor = keyUpMonitor {
+            NSEvent.removeMonitor(monitor)
+            keyUpMonitor = nil
+        }
+        usingNSEventMonitor = false
+    }
 
-    private func handleEvent(
+    // MARK: - CGEvent Handling (Primary Path)
+
+    private func handleCGEvent(
         proxy: CGEventTapProxy,
         type: CGEventType,
         event: CGEvent
@@ -104,54 +206,25 @@ class MacOSHotkeyManager: @unchecked Sendable {
 
         // Re-enable the tap if it gets disabled by the system
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-            logger.warning("Event tap disabled by system (timeout/user) — re-enabling")
+            logger.warning("Event tap disabled by system — re-enabling")
             if let tap = eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
             }
             return Unmanaged.passRetained(event)
         }
 
-        // Handle Ctrl+Shift modifier combo (flagsChanged fires when any modifier key changes)
+        // Handle modifier key changes
         if type == .flagsChanged {
             let flags = event.flags
-            // Check that exactly Ctrl+Shift are held (not Cmd or Option)
             let relevantFlags = flags.intersection(allModifiersMask)
             let hotkeyHeld = relevantFlags == requiredModifiers
 
-            if hotkeyHeld != isHotkeyHeld {
-                isHotkeyHeld = hotkeyHeld
-                logger.info("Ctrl+Shift \(hotkeyHeld ? "PRESSED" : "RELEASED") — longTalkActive: \(self.isLongTalkActive)")
-
-                if !isLongTalkActive {
-                    if hotkeyHeld {
-                        // Ctrl+Shift pressed → start Push-to-Talk recording
-                        pushToTalkStartTime = Date()
-                        DispatchQueue.main.async { [weak self] in
-                            logger.info("Calling onPushToTalkStart")
-                            self?.onPushToTalkStart?()
-                        }
-                    } else {
-                        // Ctrl+Shift released → stop recording and transcribe
-                        DispatchQueue.main.async { [weak self] in
-                            logger.info("Calling onPushToTalkEnd")
-                            self?.onPushToTalkEnd?()
-                        }
-                    }
-                } else if !hotkeyHeld {
-                    // In long-talk mode, releasing Ctrl+Shift stops it
-                    isLongTalkActive = false
-                    DispatchQueue.main.async { [weak self] in
-                        self?.onLongTalkToggle?()
-                    }
-                }
-            }
+            handleHotkeyStateChange(hotkeyNowHeld: hotkeyHeld)
         }
 
         // Handle Space key for Long-Talk toggle (Ctrl+Shift+Space)
         if type == .keyDown {
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-
-            // Space = keycode 49
             if keyCode == 49 && isHotkeyHeld && !isSpacePressed && !isLongTalkActive {
                 isSpacePressed = true
                 isLongTalkActive = true
@@ -159,7 +232,7 @@ class MacOSHotkeyManager: @unchecked Sendable {
                 DispatchQueue.main.async { [weak self] in
                     self?.onLongTalkToggle?()
                 }
-                return nil // Consume the event so Space doesn't type
+                return nil // Consume the Space so it doesn't type
             }
         }
 
@@ -171,6 +244,87 @@ class MacOSHotkeyManager: @unchecked Sendable {
         }
 
         return Unmanaged.passRetained(event)
+    }
+
+    // MARK: - NSEvent Handling (Fallback Path)
+
+    private func handleNSFlagsChanged(_ event: NSEvent) {
+        let flags = event.modifierFlags.intersection(allNSModifiersMask)
+        let hotkeyHeld = flags == requiredNSModifiers
+
+        handleHotkeyStateChange(hotkeyNowHeld: hotkeyHeld)
+    }
+
+    private func handleNSKeyDown(_ event: NSEvent) {
+        // Space = keycode 49
+        if event.keyCode == 49 && isHotkeyHeld && !isSpacePressed && !isLongTalkActive {
+            isSpacePressed = true
+            isLongTalkActive = true
+            logger.info("Ctrl+Shift+Space detected (NSEvent) — toggling Long-Talk")
+            // Note: NSEvent monitors can't consume events, so Space may leak through
+            DispatchQueue.main.async { [weak self] in
+                self?.onLongTalkToggle?()
+            }
+        }
+    }
+
+    private func handleNSKeyUp(_ event: NSEvent) {
+        if event.keyCode == 49 {
+            isSpacePressed = false
+        }
+    }
+
+    // MARK: - Shared Hotkey Logic
+
+    /// Core hotkey state machine used by both CGEvent and NSEvent paths.
+    private func handleHotkeyStateChange(hotkeyNowHeld: Bool) {
+        guard hotkeyNowHeld != isHotkeyHeld else { return }
+
+        isHotkeyHeld = hotkeyNowHeld
+        print("[Bolo HotkeyManager] Ctrl+Shift \(hotkeyNowHeld ? "PRESSED" : "RELEASED") — longTalkActive: \(isLongTalkActive)")
+        logger.info("Ctrl+Shift \(hotkeyNowHeld ? "PRESSED" : "RELEASED") — longTalkActive: \(self.isLongTalkActive)")
+
+        if !isLongTalkActive {
+            if hotkeyNowHeld {
+                // Ctrl+Shift pressed → start Push-to-Talk recording
+                pushToTalkStartTime = Date()
+                DispatchQueue.main.async { [weak self] in
+                    logger.info("Calling onPushToTalkStart")
+                    self?.onPushToTalkStart?()
+                }
+            } else {
+                // Ctrl+Shift released → stop recording and transcribe
+                DispatchQueue.main.async { [weak self] in
+                    logger.info("Calling onPushToTalkEnd")
+                    self?.onPushToTalkEnd?()
+                }
+            }
+        } else if !hotkeyNowHeld {
+            // In long-talk mode, releasing Ctrl+Shift stops it
+            isLongTalkActive = false
+            DispatchQueue.main.async { [weak self] in
+                self?.onLongTalkToggle?()
+            }
+        }
+    }
+
+    // MARK: - Retry (upgrade from NSEvent to CGEvent tap)
+
+    /// Call after the user grants Accessibility permission to upgrade
+    /// from the NSEvent fallback to the full CGEvent tap.
+    func retryEventTap() -> Bool {
+        guard !usingEventTap else { return true } // Already using event tap
+
+        if startEventTap() {
+            // Successfully upgraded — remove NSEvent monitors
+            stopNSEventMonitors()
+            usingEventTap = true
+            usingNSEventMonitor = false
+            logger.info("Upgraded from NSEvent monitors to CGEvent tap")
+            print("[Bolo HotkeyManager] Upgraded to CGEvent tap after permission granted")
+            return true
+        }
+        return false
     }
 
     // MARK: - Permissions

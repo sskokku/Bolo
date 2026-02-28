@@ -116,10 +116,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
         if hotkeyManager.start() {
             hotkeyStartSucceeded = true
-            logger.info("Hotkey event tap created successfully")
+            if hotkeyManager.usingEventTap {
+                logger.info("Hotkey manager started — using CGEvent tap (full functionality)")
+            } else {
+                logger.info("Hotkey manager started — using NSEvent monitors (fallback, limited)")
+            }
         } else {
             hotkeyStartSucceeded = false
-            logger.error("Hotkey event tap FAILED — will prompt for Accessibility permission")
+            logger.error("Hotkey manager FAILED to start — no hotkey detection available")
         }
     }
 
@@ -135,15 +139,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 }
             }
 
-            // Only prompt for Accessibility if the event tap actually failed.
-            // Don't rely on AXIsProcessTrusted() alone — after Xcode rebuilds,
-            // the code signature changes and macOS reports untrusted even though
-            // the event tap works fine.
+            // If hotkeys completely failed (neither CGEvent nor NSEvent worked),
+            // prompt for Accessibility permission
             if !hotkeyStartSucceeded {
-                logger.warning("Event tap failed — prompting for Accessibility permission")
+                logger.warning("Hotkey manager failed entirely — prompting for Accessibility permission")
                 MacOSHotkeyManager.requestAccessibilityPermission()
                 await MainActor.run {
                     appState.state = .error(.accessibilityPermissionDenied)
+                }
+            } else if !hotkeyManager.usingEventTap {
+                // NSEvent fallback is active — hotkeys work but we should still
+                // request Accessibility for full text insertion capability.
+                // Don't block the app though; just prompt gently.
+                if !MacOSHotkeyManager.hasAccessibilityPermission() {
+                    logger.info("Using NSEvent fallback — requesting Accessibility for text insertion")
+                    MacOSHotkeyManager.requestAccessibilityPermission()
                 }
             }
 
@@ -161,8 +171,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
     private func startRecording(mode: RecordingMode) {
         Task { @MainActor in
+            print("[Bolo] startRecording called — mode: \(mode), current state: \(self.appState.state)")
             logger.info("startRecording called — mode: \(String(describing: mode)), current state: \(String(describing: self.appState.state))")
             guard case .idle = appState.state else {
+                print("[Bolo] startRecording ABORTED — state is not idle: \(self.appState.state)")
                 logger.warning("startRecording aborted — state is not idle")
                 return
             }
