@@ -1,5 +1,8 @@
 import ApplicationServices
 import Cocoa
+import os.log
+
+private let logger = Logger(subsystem: "com.bolo.app", category: "TextInsertion")
 
 /// Handles inserting transcribed text into the active application's text field.
 ///
@@ -32,11 +35,11 @@ class MacOSTextInsertion {
     /// Insert text at the cursor position in the frontmost app.
     /// Tries direct AX insertion first, falls back to clipboard paste.
     func insertText(_ text: String) throws {
-        guard AXIsProcessTrusted() else {
-            throw InsertionError.accessibilityDenied
-        }
+        let trusted = AXIsProcessTrusted()
+        logger.info("insertText called — AXIsProcessTrusted: \(trusted), text length: \(text.count)")
 
-        if let element = getFocusedElement() {
+        // Try AX-based insertion if Accessibility is available
+        if trusted, let element = getFocusedElement() {
             // Check for password fields
             if isPasswordField(element) {
                 throw InsertionError.passwordField
@@ -44,11 +47,15 @@ class MacOSTextInsertion {
 
             // Try direct AX insertion
             if tryDirectInsertion(element: element, text: text) {
+                logger.info("Text inserted via AX API")
                 return
             }
+            logger.warning("AX direct insertion failed — falling back to clipboard")
+        } else {
+            logger.info("AX not available (trusted: \(trusted)) — using clipboard fallback")
         }
 
-        // Fallback to clipboard-based insertion
+        // Fallback to clipboard-based insertion (works via CGEvent Cmd+V)
         insertViaClipboard(text)
     }
 
@@ -75,24 +82,29 @@ class MacOSTextInsertion {
 
     /// Replace the currently selected text with new text.
     func replaceSelectedText(with text: String) throws {
-        guard let element = getFocusedElement() else {
-            throw InsertionError.noFocusedElement
+        let trusted = AXIsProcessTrusted()
+        logger.info("replaceSelectedText called — AXIsProcessTrusted: \(trusted)")
+
+        if trusted, let element = getFocusedElement() {
+            if isPasswordField(element) {
+                throw InsertionError.passwordField
+            }
+
+            let result = AXUIElementSetAttributeValue(
+                element,
+                kAXSelectedTextAttribute as CFString,
+                text as CFTypeRef
+            )
+
+            if result == .success {
+                logger.info("Text replaced via AX API")
+                return
+            }
+            logger.warning("AX replacement failed — falling back to clipboard")
         }
 
-        if isPasswordField(element) {
-            throw InsertionError.passwordField
-        }
-
-        let result = AXUIElementSetAttributeValue(
-            element,
-            kAXSelectedTextAttribute as CFString,
-            text as CFTypeRef
-        )
-
-        if result != .success {
-            // Fallback: use clipboard
-            insertViaClipboard(text)
-        }
+        // Fallback: use clipboard paste (replaces selection by default)
+        insertViaClipboard(text)
     }
 
     // MARK: - Context Extraction
@@ -221,6 +233,7 @@ class MacOSTextInsertion {
     // MARK: - Private: Clipboard Fallback
 
     private func insertViaClipboard(_ text: String) {
+        logger.info("insertViaClipboard — setting pasteboard and simulating Cmd+V")
         let pasteboard = NSPasteboard.general
 
         // Save current clipboard contents
@@ -230,7 +243,10 @@ class MacOSTextInsertion {
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
 
-        // Simulate Cmd+V paste
+        // Small delay to ensure pasteboard is updated before paste event
+        usleep(50_000) // 50ms
+
+        // Simulate Cmd+V paste via CGEvent
         let source = CGEventSource(stateID: .hidSystemState)
 
         let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true) // V key
@@ -241,8 +257,10 @@ class MacOSTextInsertion {
         keyUp?.flags = .maskCommand
         keyUp?.post(tap: .cghidEventTap)
 
+        logger.info("Cmd+V paste event posted")
+
         // Restore original clipboard after a short delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             if let previous = previousContents {
                 pasteboard.clearContents()
                 pasteboard.setString(previous, forType: .string)
