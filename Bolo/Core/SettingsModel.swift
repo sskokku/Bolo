@@ -1,6 +1,9 @@
 import Foundation
 import Security
 import ServiceManagement
+import os.log
+
+private let logger = Logger(subsystem: "com.bolo.app", category: "SettingsModel")
 
 // MARK: - Indicator Style
 
@@ -141,7 +144,8 @@ class AppSettings: ObservableObject {
                 try service.unregister()
             }
         } catch {
-            print("[Bolo] Failed to update launch-at-login: \(error)")
+            logger.error("Failed to update launch-at-login: \(error.localizedDescription)")
+            ErrorLogger.shared.logError(category: .settings, message: "Failed to update launch-at-login", error: error)
         }
     }
 

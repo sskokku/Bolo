@@ -66,23 +66,19 @@ class MacOSHotkeyManager: @unchecked Sendable {
     func start() -> Bool {
         let trusted = AXIsProcessTrusted()
         logger.info("Starting hotkey manager — AXIsProcessTrusted: \(trusted)")
-        print("[Bolo HotkeyManager] Starting — AXIsProcessTrusted: \(trusted)")
 
         // --- Attempt 1: CGEvent tap (requires Accessibility) ---
         if startEventTap() {
             usingEventTap = true
-            print("[Bolo HotkeyManager] Using CGEvent tap (primary)")
             logger.info("Using CGEvent tap (primary)")
             return true
         }
 
         // --- Attempt 2: NSEvent global monitors (fallback) ---
         logger.warning("CGEvent tap failed — falling back to NSEvent global monitors")
-        print("[Bolo HotkeyManager] CGEvent tap failed — trying NSEvent global monitors")
 
         if startNSEventMonitors() {
             usingNSEventMonitor = true
-            print("[Bolo HotkeyManager] Using NSEvent global monitors (fallback)")
             logger.info("Using NSEvent global monitors (fallback)")
             return true
         }
@@ -284,7 +280,6 @@ class MacOSHotkeyManager: @unchecked Sendable {
         guard hotkeyNowHeld != isHotkeyHeld else { return }
 
         isHotkeyHeld = hotkeyNowHeld
-        print("[Bolo HotkeyManager] Ctrl+Shift \(hotkeyNowHeld ? "PRESSED" : "RELEASED") — longTalkActive: \(isLongTalkActive)")
         logger.info("Ctrl+Shift \(hotkeyNowHeld ? "PRESSED" : "RELEASED") — longTalkActive: \(self.isLongTalkActive)")
 
         if !isLongTalkActive {
@@ -324,7 +319,6 @@ class MacOSHotkeyManager: @unchecked Sendable {
             usingEventTap = true
             usingNSEventMonitor = false
             logger.info("Upgraded from NSEvent monitors to CGEvent tap")
-            print("[Bolo HotkeyManager] Upgraded to CGEvent tap after permission granted")
             return true
         }
         return false

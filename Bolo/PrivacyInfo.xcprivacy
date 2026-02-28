@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Bolo Privacy Manifest
+	  Required by Apple for App Store submission (enforced from May 2024).
+	  https://developer.apple.com/documentation/bundleresources/privacy_manifest_files
+	-->
+
+	<!-- Bolo does NOT engage in data tracking -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+
+	<!-- No tracking domains -->
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!-- Bolo does NOT collect or link data to user identity.
+	     Audio is sent transiently to Google Gemini API for transcription
+	     and is not retained by Bolo itself. -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<!-- Required API usage declarations -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+
+		<!-- UserDefaults — used to persist app settings (hotkey, model, indicator style, etc.) -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!-- CA92.1: Access info from the same app that wrote it -->
+				<string>CA92.1</string>
+			</array>
+		</dict>
+
+		<!-- File timestamps — used by ErrorLogger to manage log file age and size -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestampAPIs</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!-- C617.1: Display file timestamps to the person using the device -->
+				<string>C617.1</string>
+			</array>
+		</dict>
+
+		<!-- Disk space — used by ErrorLogger to check log file size before writing -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!-- E174.1: Check whether there is sufficient disk space to write app data -->
+				<string>E174.1</string>
+			</array>
+		</dict>
+
+	</array>
+</dict>
+</plist>

@@ -63,10 +63,12 @@ final class ErrorLogger: @unchecked Sendable {
     // MARK: - Constants
 
     private let logDirectory: URL = {
-        let logs = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("Logs", isDirectory: true)
+        // Use Application Support container — compatible with App Sandbox.
+        // ~/Library/Logs/ is outside the sandbox; ~/Library/Application Support/{BundleID}/Logs/ is not.
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             .appendingPathComponent("Bolo", isDirectory: true)
-        return logs
+            .appendingPathComponent("Logs", isDirectory: true)
+        return appSupport
     }()
 
     private var logFileURL: URL {

@@ -34,12 +34,17 @@ targets:
       base:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: KJ47YGNM8Z
-        CODE_SIGN_IDENTITY: "Apple Development"
         PRODUCT_BUNDLE_IDENTIFIER: com.bolo.app
         CODE_SIGN_ENTITLEMENTS: Bolo/Bolo.entitlements
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
         SWIFT_STRICT_CONCURRENCY: complete
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: Bolo/Info.plist
+      configs:
+        Debug:
+          CODE_SIGN_IDENTITY: "Apple Development"
+        Release:
+          # For App Store: set to "Apple Distribution" when submitting
+          CODE_SIGN_IDENTITY: "Apple Distribution"
     entitlements:
       path: Bolo/Bolo.entitlements

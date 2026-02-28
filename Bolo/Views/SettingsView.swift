@@ -204,7 +204,7 @@ struct SettingsView: View {
             Section("Error Logging") {
                 Toggle("Enable Logging", isOn: $settings.enableLogging)
 
-                Text("Structured logs are written to ~/Library/Logs/Bolo/bolo.log")
+                Text("Structured logs are written to ~/Library/Application Support/Bolo/Logs/bolo.log")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

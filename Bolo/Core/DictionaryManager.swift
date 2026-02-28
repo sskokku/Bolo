@@ -1,5 +1,8 @@
 import Foundation
 import SQLite3
+import os.log
+
+private let logger = Logger(subsystem: "com.bolo.app", category: "DictionaryManager")
 
 /// Manages the personal dictionary stored in a local SQLite database.
 /// Supports CRUD operations, auto-learning, and provides top entries
@@ -182,7 +185,8 @@ class DictionaryManager {
 
     private func openDatabase() {
         if sqlite3_open(dbPath, &db) != SQLITE_OK {
-            print("[Bolo] Error opening dictionary database at \(dbPath)")
+            logger.error("Failed to open dictionary database at \(self.dbPath)")
+            ErrorLogger.shared.logError(category: .dictionary, message: "Failed to open dictionary database at \(self.dbPath)")
         }
     }
 

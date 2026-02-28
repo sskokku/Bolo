@@ -182,10 +182,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
     private func startRecording(mode: RecordingMode) {
         Task { @MainActor in
-            print("[Bolo] startRecording called — mode: \(mode), current state: \(self.appState.state)")
             logger.info("startRecording called — mode: \(String(describing: mode)), current state: \(String(describing: self.appState.state))")
             guard case .idle = appState.state else {
-                print("[Bolo] startRecording ABORTED — state is not idle: \(self.appState.state)")
                 logger.warning("startRecording aborted — state is not idle")
                 return
             }

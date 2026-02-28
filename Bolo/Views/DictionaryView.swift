@@ -1,4 +1,7 @@
 import SwiftUI
+import os.log
+
+private let logger = Logger(subsystem: "com.bolo.app", category: "DictionaryView")
 
 /// Dictionary management view for adding, editing, and removing personal dictionary entries.
 struct DictionaryView: View {
@@ -112,7 +115,8 @@ struct DictionaryView: View {
             if let data = try? Data(contentsOf: url) {
                 let count = dictionaryManager.importFromJSON(data)
                 refreshEntries()
-                print("[Bolo] Imported \(count) dictionary entries")
+                logger.info("Imported \(count) dictionary entries")
+                ErrorLogger.shared.logInfo(category: .dictionary, message: "Imported \(count) dictionary entries")
             }
         }
     }

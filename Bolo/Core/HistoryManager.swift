@@ -1,5 +1,8 @@
 import Foundation
 import SQLite3
+import os.log
+
+private let logger = Logger(subsystem: "com.bolo.app", category: "HistoryManager")
 
 /// Manages transcription history stored in a local SQLite database.
 /// Keeps a record of recent transcriptions for review and re-use.
@@ -124,7 +127,8 @@ class HistoryManager {
 
     private func openDatabase() {
         if sqlite3_open(dbPath, &db) != SQLITE_OK {
-            print("[Bolo] Error opening history database at \(dbPath)")
+            logger.error("Failed to open history database at \(self.dbPath)")
+            ErrorLogger.shared.logError(category: .history, message: "Failed to open history database at \(self.dbPath)")
         }
     }
 

@@ -19,6 +19,7 @@
 		4606189AC10186C22E178924 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A81D5296D4284D17EC85F6D3 /* SettingsView.swift */; };
 		463F2EFDE60371B2E8B16564 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C6CE109D78E4E7F847135E /* AppState.swift */; };
 		4D9646DC88632ED8540995AA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD9EDDB796988A13C1F9BDAA /* Assets.xcassets */; };
+		66108E0761D723EF85EB6F31 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 24E0B852292C6241AF53EBFE /* PrivacyInfo.xcprivacy */; };
 		661369681F5ED693CB47C0E5 /* BoloApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F20CCBD2500B27CD0B3907 /* BoloApp.swift */; };
 		6B92680170B4A72373CDF616 /* AudioProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94BBA41DF3195F7FB1898776 /* AudioProcessor.swift */; };
 		8DC62A62FB3092F3118DAE97 /* DictionaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B055BBF3096C9B746080CCE4 /* DictionaryView.swift */; };
@@ -36,6 +37,7 @@
 		0FEB26B8E24610E8772D3820 /* MenuBarIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarIndicatorView.swift; sourceTree = "<group>"; };
 		12C3EF136E908A113369C5E0 /* TextInsertion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInsertion.swift; sourceTree = "<group>"; };
 		13DF340DCB46D7FE00373026 /* Bolo-Icon.svg */ = {isa = PBXFileReference; path = "Bolo-Icon.svg"; sourceTree = "<group>"; };
+		24E0B852292C6241AF53EBFE /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2583510F395154C8336E6460 /* Bolo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Bolo.entitlements; sourceTree = "<group>"; };
 		25F20CCBD2500B27CD0B3907 /* BoloApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoloApp.swift; sourceTree = "<group>"; };
 		2EE370038657FB147E8545F2 /* FloatingToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingToolbar.swift; sourceTree = "<group>"; };
@@ -120,6 +122,7 @@
 				CB7E0F46907D8405F7563C8E /* Views */,
 				2583510F395154C8336E6460 /* Bolo.entitlements */,
 				25F20CCBD2500B27CD0B3907 /* BoloApp.swift */,
+				24E0B852292C6241AF53EBFE /* PrivacyInfo.xcprivacy */,
 			);
 			path = Bolo;
 			sourceTree = "<group>";
@@ -218,6 +221,7 @@
 			files = (
 				4D9646DC88632ED8540995AA /* Assets.xcassets in Resources */,
 				3BB1A24341DB05830306F7AF /* Bolo-Icon.svg in Resources */,
+				66108E0761D723EF85EB6F31 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,7 +409,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Bolo/Bolo.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = KJ47YGNM8Z;
