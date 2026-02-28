@@ -182,16 +182,12 @@ struct RecordingPillView: View {
         .padding(.vertical, 12)
         .background {
             Capsule()
-                .fill(.ultraThinMaterial)
+                .fill(Color(red: 0.55, green: 0.08, blue: 0.08))
                 .overlay {
                     Capsule()
-                        .fill(Color.red.opacity(0.15))
+                        .strokeBorder(Color.red.opacity(0.4), lineWidth: 0.5)
                 }
-                .overlay {
-                    Capsule()
-                        .strokeBorder(Color.red.opacity(0.3), lineWidth: 0.5)
-                }
-                .shadow(color: .red.opacity(0.2), radius: 12, y: 4)
+                .shadow(color: .red.opacity(0.3), radius: 12, y: 4)
         }
     }
 
@@ -225,16 +221,12 @@ struct ProcessingPillView: View {
         .padding(.vertical, 12)
         .background {
             Capsule()
-                .fill(.ultraThinMaterial)
+                .fill(Color(red: 0.1, green: 0.15, blue: 0.45))
                 .overlay {
                     Capsule()
-                        .fill(Color.blue.opacity(0.12))
+                        .strokeBorder(Color.blue.opacity(0.35), lineWidth: 0.5)
                 }
-                .overlay {
-                    Capsule()
-                        .strokeBorder(Color.blue.opacity(0.25), lineWidth: 0.5)
-                }
-                .shadow(color: .blue.opacity(0.15), radius: 10, y: 4)
+                .shadow(color: .blue.opacity(0.25), radius: 10, y: 4)
         }
     }
 }
@@ -257,16 +249,12 @@ struct SuccessPillView: View {
         .padding(.vertical, 12)
         .background {
             Capsule()
-                .fill(.ultraThinMaterial)
+                .fill(Color(red: 0.08, green: 0.4, blue: 0.15))
                 .overlay {
                     Capsule()
-                        .fill(Color.green.opacity(0.15))
+                        .strokeBorder(Color.green.opacity(0.35), lineWidth: 0.5)
                 }
-                .overlay {
-                    Capsule()
-                        .strokeBorder(Color.green.opacity(0.3), lineWidth: 0.5)
-                }
-                .shadow(color: .green.opacity(0.15), radius: 10, y: 4)
+                .shadow(color: .green.opacity(0.2), radius: 10, y: 4)
         }
     }
 }
@@ -291,16 +279,12 @@ struct ErrorPillView: View {
         .padding(.vertical, 10)
         .background {
             Capsule()
-                .fill(.ultraThinMaterial)
+                .fill(Color(red: 0.55, green: 0.08, blue: 0.08))
                 .overlay {
                     Capsule()
-                        .fill(Color.red.opacity(0.25))
+                        .strokeBorder(Color.red.opacity(0.4), lineWidth: 0.5)
                 }
-                .overlay {
-                    Capsule()
-                        .strokeBorder(Color.red.opacity(0.35), lineWidth: 0.5)
-                }
-                .shadow(color: .red.opacity(0.2), radius: 10, y: 4)
+                .shadow(color: .red.opacity(0.25), radius: 10, y: 4)
         }
     }
 
