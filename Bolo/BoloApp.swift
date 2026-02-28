@@ -239,6 +239,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
             // Stop audio capture and get WAV data
             let wavData = audioCapture.stopRecording()
+            appState.resetWaveform()
 
             // Validate recording length
             guard appState.recordingDuration > 0.3 else {
@@ -416,7 +417,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
     nonisolated func audioCaptureDidUpdateLevel(_ level: Float) {
         Task { @MainActor in
-            self.appState.audioLevel = level
+            self.appState.pushAudioLevel(level)
         }
     }
 

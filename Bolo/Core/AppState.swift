@@ -51,6 +51,24 @@ class AppState: ObservableObject {
     @Published var recordingDuration: TimeInterval = 0
     @Published var isLongTalkActive: Bool = false
 
+    /// Rolling buffer of audio levels for waveform visualization (24 bars).
+    @Published var waveformSamples: [Float] = Array(repeating: 0, count: 24)
+
+    // MARK: - Waveform
+
+    /// Push a new audio level into the waveform buffer (shifts left, appends new sample).
+    func pushAudioLevel(_ level: Float) {
+        audioLevel = level
+        waveformSamples.removeFirst()
+        waveformSamples.append(level)
+    }
+
+    /// Reset the waveform buffer to silence.
+    func resetWaveform() {
+        waveformSamples = Array(repeating: 0, count: 24)
+        audioLevel = 0
+    }
+
     // MARK: - Computed Properties
 
     var isRecording: Bool {
