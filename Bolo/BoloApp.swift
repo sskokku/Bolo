@@ -306,22 +306,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
                 // Re-activate the app the user was in when they started recording.
                 // During the 2-3 seconds of API processing, focus may have shifted.
-                if let target = self.targetApp, !target.isTerminated {
-                    logger.info("Re-activating target app: \(target.localizedName ?? "unknown")")
+                let target = self.targetApp
+                if let target, !target.isTerminated {
+                    logger.info("Re-activating target app: \(target.localizedName ?? "unknown") (PID \(target.processIdentifier))")
                     target.activate()
-                    // Give the app time to come to front and establish focus
-                    try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
+
+                    // Poll until the app is actually frontmost (up to 500ms)
+                    for _ in 0..<10 {
+                        try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+                        if NSWorkspace.shared.frontmostApplication?.processIdentifier == target.processIdentifier {
+                            break
+                        }
+                    }
+                    // Extra settle time for the window to fully accept keyboard input
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
                 }
+
+                // Get target PID for direct event delivery to the correct process
+                let targetPID: pid_t? = (target != nil && !target!.isTerminated) ? target!.processIdentifier : nil
 
                 // Try AX-based text insertion if Accessibility is granted
                 let trusted = AXIsProcessTrusted()
-                logger.info("Attempting text insertion — AXIsProcessTrusted: \(trusted)")
+                logger.info("Attempting text insertion — AXIsProcessTrusted: \(trusted), targetPID: \(targetPID.map { String($0) } ?? "nil")")
 
                 if trusted {
                     if case .command = mode {
-                        try textInsertion.replaceSelectedText(with: resultText)
+                        try textInsertion.replaceSelectedText(with: resultText, targetPID: targetPID)
                     } else {
-                        try textInsertion.insertText(resultText)
+                        try textInsertion.insertText(resultText, targetPID: targetPID)
                     }
                 } else {
                     // No Accessibility — show one-time alert

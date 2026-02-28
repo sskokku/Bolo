@@ -34,9 +34,12 @@ class MacOSTextInsertion {
 
     /// Insert text at the cursor position in the frontmost app.
     /// Tries direct AX insertion first, falls back to clipboard paste.
-    func insertText(_ text: String) throws {
+    /// - Parameters:
+    ///   - text: The text to insert
+    ///   - targetPID: Optional PID of the target app for direct event delivery
+    func insertText(_ text: String, targetPID: pid_t? = nil) throws {
         let trusted = AXIsProcessTrusted()
-        logger.info("insertText called — AXIsProcessTrusted: \(trusted), text length: \(text.count)")
+        logger.info("insertText called — AXIsProcessTrusted: \(trusted), text length: \(text.count), targetPID: \(targetPID.map { String($0) } ?? "nil")")
 
         // Try AX-based insertion if Accessibility is available
         if trusted, let element = getFocusedElement() {
@@ -56,7 +59,7 @@ class MacOSTextInsertion {
         }
 
         // Fallback to clipboard-based insertion (works via CGEvent Cmd+V)
-        insertViaClipboard(text)
+        insertViaClipboard(text, targetPID: targetPID)
     }
 
     // MARK: - Selection (for Command Mode)
@@ -81,7 +84,10 @@ class MacOSTextInsertion {
     }
 
     /// Replace the currently selected text with new text.
-    func replaceSelectedText(with text: String) throws {
+    /// - Parameters:
+    ///   - text: The replacement text
+    ///   - targetPID: Optional PID of the target app for direct event delivery
+    func replaceSelectedText(with text: String, targetPID: pid_t? = nil) throws {
         let trusted = AXIsProcessTrusted()
         logger.info("replaceSelectedText called — AXIsProcessTrusted: \(trusted)")
 
@@ -104,7 +110,7 @@ class MacOSTextInsertion {
         }
 
         // Fallback: use clipboard paste (replaces selection by default)
-        insertViaClipboard(text)
+        insertViaClipboard(text, targetPID: targetPID)
     }
 
     // MARK: - Context Extraction
@@ -232,8 +238,8 @@ class MacOSTextInsertion {
 
     // MARK: - Private: Clipboard Fallback
 
-    private func insertViaClipboard(_ text: String) {
-        logger.info("insertViaClipboard — simulating Cmd+V (text already on clipboard)")
+    private func insertViaClipboard(_ text: String, targetPID: pid_t? = nil) {
+        logger.info("insertViaClipboard — targetPID: \(targetPID.map { String($0) } ?? "nil")")
 
         // Ensure text is on clipboard (caller should have set it, but be safe)
         let pasteboard = NSPasteboard.general
@@ -244,19 +250,31 @@ class MacOSTextInsertion {
         usleep(100_000) // 100ms
 
         // Simulate Cmd+V paste via CGEvent
-        // Use .combinedSessionState to work better with the active app
         let source = CGEventSource(stateID: .combinedSessionState)
 
-        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true) // V key = 0x09
-        keyDown?.flags = .maskCommand
-        keyDown?.post(tap: .cghidEventTap)
+        guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true),
+              let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false) else {
+            logger.error("Failed to create CGEvent for Cmd+V")
+            return
+        }
 
-        // Small delay between key down and key up for reliable detection
-        usleep(20_000) // 20ms
+        keyDown.flags = .maskCommand
+        keyUp.flags = .maskCommand
 
-        let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false)
-        keyUp?.flags = .maskCommand
-        keyUp?.post(tap: .cghidEventTap)
+        if let pid = targetPID {
+            // Send Cmd+V directly to the target process — much more reliable
+            // than posting to the HID tap, especially for Electron/browser apps.
+            logger.info("Posting Cmd+V directly to PID \(pid)")
+            keyDown.postToPid(pid)
+            usleep(30_000) // 30ms between key down and key up
+            keyUp.postToPid(pid)
+        } else {
+            // No target PID — broadcast to the HID event tap (less reliable)
+            logger.info("Posting Cmd+V to HID event tap (no target PID)")
+            keyDown.post(tap: .cghidEventTap)
+            usleep(30_000) // 30ms
+            keyUp.post(tap: .cghidEventTap)
+        }
 
         logger.info("Cmd+V paste event posted — text remains on clipboard for manual paste")
 
