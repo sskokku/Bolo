@@ -290,10 +290,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 // Insert text
                 appState.state = .inserting
 
-                if case .command = mode {
-                    try textInsertion.replaceSelectedText(with: resultText)
+                // Check if we can actually insert (Accessibility is needed)
+                if !AXIsProcessTrusted() {
+                    // Can't insert — copy to clipboard and show alert
+                    logger.warning("Accessibility not granted — copying to clipboard instead")
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    pasteboard.setString(resultText, forType: .string)
+
+                    showAccessibilityAlert(transcribedText: resultText)
                 } else {
-                    try textInsertion.insertText(resultText)
+                    // Accessibility available — insert directly
+                    if case .command = mode {
+                        try textInsertion.replaceSelectedText(with: resultText)
+                    } else {
+                        try textInsertion.insertText(resultText)
+                    }
                 }
 
                 // Save to transcription history
@@ -400,6 +412,47 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
             floatingToolbar.show()
         } else {
             floatingToolbar.hide()
+        }
+    }
+
+    // MARK: - Accessibility Alert
+
+    /// Shows a one-time alert explaining that Accessibility permission is needed
+    /// for text insertion. The transcribed text is already on the clipboard.
+    private var hasShownAccessibilityAlert = false
+
+    private func showAccessibilityAlert(transcribedText: String) {
+        // Copy is already done by the caller — just show the alert once
+        guard !hasShownAccessibilityAlert else {
+            // Subsequent times, just show a notification
+            logger.info("Text copied to clipboard (Accessibility still not granted)")
+            return
+        }
+        hasShownAccessibilityAlert = true
+
+        let alert = NSAlert()
+        alert.messageText = "Text Copied to Clipboard"
+        alert.informativeText = """
+        Your transcription was successful! The text has been copied to your clipboard — press Cmd+V to paste it.
+
+        To enable automatic text insertion, Bolo needs Accessibility permission:
+
+        1. Open System Settings → Privacy & Security → Accessibility
+        2. Click "+" and add Bolo from:
+           ~/Library/Developer/Xcode/DerivedData/Bolo-.../Build/Products/Debug/Bolo.app
+        3. Make sure the toggle is ON
+
+        After granting permission, Bolo will insert text directly at your cursor.
+        """
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Open Accessibility Settings")
+        alert.addButton(withTitle: "OK")
+
+        NSApp.activate(ignoringOtherApps: true)
+        let response = alert.runModal()
+
+        if response == .alertFirstButtonReturn {
+            MacOSHotkeyManager.requestAccessibilityPermission()
         }
     }
 
