@@ -33,7 +33,13 @@ class MacOSTextInsertion {
     // MARK: - Insert Text
 
     /// Insert text at the cursor position in the frontmost app.
-    /// Tries direct AX insertion first, falls back to clipboard paste.
+    ///
+    /// When a `targetPID` is provided, always uses clipboard + Cmd+V posted
+    /// directly to that process.  This is the most reliable method and works
+    /// in every app (native, Electron, browsers).  AX direct insertion is only
+    /// attempted as a last resort when no target PID is available, because
+    /// Electron/browser apps report AX success without actually inserting text.
+    ///
     /// - Parameters:
     ///   - text: The text to insert
     ///   - targetPID: Optional PID of the target app for direct event delivery
@@ -41,16 +47,24 @@ class MacOSTextInsertion {
         let trusted = AXIsProcessTrusted()
         logger.info("insertText called — AXIsProcessTrusted: \(trusted), text length: \(text.count), targetPID: \(targetPID.map { String($0) } ?? "nil")")
 
-        // Try AX-based insertion if Accessibility is available
+        // When we have a target PID, ALWAYS use clipboard paste.
+        // AX insertion reports false success for Electron/browser apps
+        // (e.g. Claude, Chrome, VS Code, Slack) — the API returns .success
+        // but the text never appears.  Clipboard + postToPid is universal.
+        if let pid = targetPID, trusted {
+            logger.info("Using clipboard + postToPid for targeted insertion (PID \(pid))")
+            insertViaClipboard(text, targetPID: pid)
+            return
+        }
+
+        // No target PID — try AX-based insertion as fallback
         if trusted, let element = getFocusedElement() {
-            // Check for password fields
             if isPasswordField(element) {
                 throw InsertionError.passwordField
             }
 
-            // Try direct AX insertion
             if tryDirectInsertion(element: element, text: text) {
-                logger.info("Text inserted via AX API")
+                logger.info("Text inserted via AX API (no target PID path)")
                 return
             }
             logger.warning("AX direct insertion failed — falling back to clipboard")
@@ -58,7 +72,7 @@ class MacOSTextInsertion {
             logger.info("AX not available (trusted: \(trusted)) — using clipboard fallback")
         }
 
-        // Fallback to clipboard-based insertion (works via CGEvent Cmd+V)
+        // Last resort: clipboard with no target PID (broadcasts to HID tap)
         insertViaClipboard(text, targetPID: targetPID)
     }
 
@@ -84,6 +98,7 @@ class MacOSTextInsertion {
     }
 
     /// Replace the currently selected text with new text.
+    /// Uses clipboard paste when a target PID is provided (most reliable).
     /// - Parameters:
     ///   - text: The replacement text
     ///   - targetPID: Optional PID of the target app for direct event delivery
@@ -91,6 +106,14 @@ class MacOSTextInsertion {
         let trusted = AXIsProcessTrusted()
         logger.info("replaceSelectedText called — AXIsProcessTrusted: \(trusted)")
 
+        // When we have a target PID, always use clipboard paste (see insertText for rationale)
+        if let pid = targetPID, trusted {
+            logger.info("Using clipboard + postToPid for targeted replacement (PID \(pid))")
+            insertViaClipboard(text, targetPID: pid)
+            return
+        }
+
+        // No target PID — try AX-based replacement
         if trusted, let element = getFocusedElement() {
             if isPasswordField(element) {
                 throw InsertionError.passwordField
@@ -109,7 +132,7 @@ class MacOSTextInsertion {
             logger.warning("AX replacement failed — falling back to clipboard")
         }
 
-        // Fallback: use clipboard paste (replaces selection by default)
+        // Last resort: clipboard with no target PID
         insertViaClipboard(text, targetPID: targetPID)
     }
 

@@ -1,4 +1,7 @@
 import Foundation
+import os.log
+
+private let logger = Logger(subsystem: "com.bolo.app", category: "GeminiClient")
 
 // MARK: - Transcription Provider Protocol
 
@@ -136,21 +139,31 @@ struct GeminiClient: TranscriptionProvider {
             throw GeminiError.invalidAPIKey
         }
 
-        guard let url = URL(string: "\(baseURL)/models/\(model):generateContent") else {
+        let urlString = "\(baseURL)/models/\(model):generateContent"
+        guard let url = URL(string: urlString) else {
             throw GeminiError.invalidResponse
         }
+
+        logger.info("Gemini API request → \(urlString)")
+        print("[Bolo] Gemini API request → \(urlString)")
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
-        urlRequest.timeoutInterval = 30
+        urlRequest.timeoutInterval = 60  // Increased from 30s for large audio
         urlRequest.httpBody = try JSONEncoder().encode(request)
+
+        let bodySize = urlRequest.httpBody?.count ?? 0
+        logger.info("Request body size: \(bodySize) bytes")
+        print("[Bolo] Request body size: \(bodySize) bytes")
 
         let (data, response): (Data, URLResponse)
         do {
             (data, response) = try await URLSession.shared.data(for: urlRequest)
         } catch {
+            logger.error("Network error: \(error.localizedDescription)")
+            print("[Bolo] Network error: \(error)")
             throw GeminiError.networkError(error)
         }
 
@@ -158,22 +171,44 @@ struct GeminiClient: TranscriptionProvider {
             throw GeminiError.invalidResponse
         }
 
+        logger.info("Gemini API response — HTTP \(httpResponse.statusCode), body: \(data.count) bytes")
+        print("[Bolo] Gemini API response — HTTP \(httpResponse.statusCode), body: \(data.count) bytes")
+
         // Handle HTTP errors
         if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
+            print("[Bolo] API key rejected (HTTP \(httpResponse.statusCode))")
             throw GeminiError.invalidAPIKey
         }
 
         guard httpResponse.statusCode == 200 else {
             let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            logger.error("API error: HTTP \(httpResponse.statusCode) — \(errorBody.prefix(500))")
+            print("[Bolo] API error: HTTP \(httpResponse.statusCode) — \(errorBody.prefix(500))")
             throw GeminiError.apiError("HTTP \(httpResponse.statusCode): \(errorBody)")
         }
 
-        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+        // Log raw response for debugging
+        if let responseStr = String(data: data, encoding: .utf8) {
+            print("[Bolo] Gemini raw response: \(responseStr.prefix(300))")
+        }
+
+        let geminiResponse: GeminiResponse
+        do {
+            geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+        } catch {
+            logger.error("JSON decode failed: \(error.localizedDescription)")
+            print("[Bolo] JSON decode failed: \(error)")
+            throw GeminiError.invalidResponse
+        }
 
         guard let text = geminiResponse.candidates?.first?.content?.parts?.first?.text else {
+            logger.error("No text in response — candidates: \(geminiResponse.candidates?.count ?? 0)")
+            print("[Bolo] No text in Gemini response")
             throw GeminiError.noTextInResponse
         }
 
+        logger.info("Gemini returned: \(text.prefix(100))")
+        print("[Bolo] Gemini returned: \(text.prefix(100))")
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
