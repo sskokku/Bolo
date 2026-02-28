@@ -44,7 +44,8 @@ targets:
         Debug:
           CODE_SIGN_IDENTITY: "Apple Development"
         Release:
-          # For App Store: set to "Apple Distribution" when submitting
-          CODE_SIGN_IDENTITY: "Apple Distribution"
+          # Direct distribution via notarization (Developer ID)
+          # Change to "Apple Distribution" only if submitting to Mac App Store
+          CODE_SIGN_IDENTITY: "Developer ID Application"
     entitlements:
       path: Bolo/Bolo.entitlements

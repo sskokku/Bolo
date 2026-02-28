@@ -1,0 +1,232 @@
+name: Release
+
+# Triggers on any tag push that looks like v1.0, v1.2.3, etc.
+on:
+  push:
+    tags:
+      - "v*.*"
+      - "v*.*.*"
+
+# Allow only one concurrent release at a time
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    name: Build, Notarize & Release
+    runs-on: macos-15          # macOS 15 + Xcode 16+
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0       # full history for changelog generation
+
+      # ── 2. Parse version from tag ────────────────────────────────────────────
+      - name: Parse version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"           # e.g.  v1.2.3
+          VERSION="${TAG#v}"                 # strip leading "v"  →  1.2.3
+          BUILD="${GITHUB_RUN_NUMBER}"       # monotonically increasing
+          echo "TAG=$TAG"        >> "$GITHUB_OUTPUT"
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "BUILD=$BUILD"    >> "$GITHUB_OUTPUT"
+          echo "🏷  Tag=$TAG  Version=$VERSION  Build=$BUILD"
+
+      # ── 3. Select Xcode ──────────────────────────────────────────────────────
+      - name: Select Xcode 16
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      # ── 4. Install XcodeGen ──────────────────────────────────────────────────
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # ── 5. Import Developer ID certificate ───────────────────────────────────
+      # Secret setup (one-time, in repo Settings → Secrets):
+      #   APPLE_DEVELOPER_CERTIFICATE_BASE64:
+      #       base64-encode your "Developer ID Application" .p12:
+      #       base64 -i ~/Downloads/DeveloperIDApplication.p12 | pbcopy
+      #   APPLE_DEVELOPER_CERTIFICATE_PASSWORD:
+      #       the password you set when exporting the .p12
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/bolo-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+          CERT_PATH="$RUNNER_TEMP/certificate.p12"
+
+          # Write certificate to disk
+          echo "$CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+
+          # Create a temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate into the temporary keychain
+          security import "$CERT_PATH" \
+              -k "$KEYCHAIN_PATH" \
+              -P "$CERTIFICATE_PASSWORD" \
+              -T /usr/bin/codesign
+
+          # Make it available to xcodebuild without a UI prompt
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list \
+              -S apple-tool:,apple:,codesign: \
+              -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      # ── 6. Store notarization credentials ────────────────────────────────────
+      # Secrets needed:
+      #   NOTARIZE_APPLE_ID     — your Apple ID email
+      #   NOTARIZE_APP_PASSWORD — app-specific password (appleid.apple.com)
+      #   NOTARIZE_TEAM_ID      — KJ47YGNM8Z  (or read from project.yml)
+      - name: Store notarization credentials
+        env:
+          APPLE_ID:       ${{ secrets.NOTARIZE_APPLE_ID }}
+          APP_PASSWORD:   ${{ secrets.NOTARIZE_APP_PASSWORD }}
+          TEAM_ID:        ${{ secrets.NOTARIZE_TEAM_ID }}
+        run: |
+          xcrun notarytool store-credentials "bolo-notarize" \
+              --apple-id  "$APPLE_ID" \
+              --team-id   "$TEAM_ID" \
+              --password  "$APP_PASSWORD"
+
+      # ── 7. Bump version in project.yml ───────────────────────────────────────
+      - name: Bump version
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          BUILD:   ${{ steps.version.outputs.BUILD }}
+        run: |
+          perl -i '' "s/MARKETING_VERSION: \".*\"/MARKETING_VERSION: \"$VERSION\"/" project.yml
+          perl -i '' "s/CURRENT_PROJECT_VERSION: \".*\"/CURRENT_PROJECT_VERSION: \"$BUILD\"/" project.yml
+
+      # ── 8. Generate Xcode project ─────────────────────────────────────────────
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      # ── 9. Archive ────────────────────────────────────────────────────────────
+      - name: Archive
+        run: |
+          mkdir -p dist
+          xcodebuild archive \
+              -project Bolo.xcodeproj \
+              -scheme Bolo \
+              -configuration Release \
+              -archivePath dist/Bolo.xcarchive \
+              -destination "generic/platform=macOS" \
+              CODE_SIGN_STYLE=Automatic \
+              DEVELOPMENT_TEAM=KJ47YGNM8Z \
+              | xcpretty || true
+
+      # ── 10. Export (Developer ID signed) ──────────────────────────────────────
+      - name: Export Developer ID app
+        run: |
+          xcodebuild -exportArchive \
+              -archivePath dist/Bolo.xcarchive \
+              -exportPath  dist/export \
+              -exportOptionsPlist ExportOptions.plist
+
+      # ── 11. Notarize ──────────────────────────────────────────────────────────
+      - name: Notarize
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          APP="dist/export/Bolo.app"
+          ZIP="dist/Bolo-${VERSION}.zip"
+
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
+
+          xcrun notarytool submit "$ZIP" \
+              --keychain-profile "bolo-notarize" \
+              --wait \
+              --timeout 600 \
+              | tee dist/notarization.log
+
+          grep "status: Accepted" dist/notarization.log \
+              || (cat dist/notarization.log && exit 1)
+
+      # ── 12. Staple ────────────────────────────────────────────────────────────
+      - name: Staple notarization ticket
+        run: xcrun stapler staple dist/export/Bolo.app
+
+      # ── 13. Package DMG ───────────────────────────────────────────────────────
+      - name: Create DMG
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          APP="dist/export/Bolo.app"
+          STAGING="dist/dmg_staging"
+          RW_DMG="dist/rw.dmg"
+          DMG="dist/Bolo-${VERSION}.dmg"
+
+          mkdir -p "$STAGING"
+          cp -R "$APP" "$STAGING/"
+          ln -s /Applications "$STAGING/Applications"
+
+          hdiutil create \
+              -volname "Bolo $VERSION" \
+              -srcfolder "$STAGING" \
+              -ov -format UDRW \
+              "$RW_DMG" > /dev/null
+
+          hdiutil convert "$RW_DMG" \
+              -format UDZO -imagekey zlib-level=9 \
+              -o "$DMG" > /dev/null
+
+          rm -f "$RW_DMG"
+          echo "DMG_PATH=$DMG" >> "$GITHUB_ENV"
+          ls -lh "$DMG"
+
+      # ── 14. Generate changelog ─────────────────────────────────────────────────
+      - name: Generate release notes
+        id: changelog
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          # Commits since previous tag (or start of history)
+          PREV_TAG="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')"
+          if [[ -n "$PREV_TAG" ]]; then
+            RANGE="$PREV_TAG..HEAD"
+            SINCE="since $PREV_TAG"
+          else
+            RANGE="HEAD"
+            SINCE="initial release"
+          fi
+
+          echo "### Changes $SINCE" > /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+          git log $RANGE --pretty=format:"- %s (%h)" \
+              --no-merges >> /tmp/release_notes.md || true
+
+          echo "" >> /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+          echo "---" >> /tmp/release_notes.md
+          echo "**Requires:** macOS 15.0+" >> /tmp/release_notes.md
+          echo "**Accessibility permission required** for global hotkeys." >> /tmp/release_notes.md
+
+          echo "NOTES_FILE=/tmp/release_notes.md" >> "$GITHUB_ENV"
+
+      # ── 15. Create GitHub Release ──────────────────────────────────────────────
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION:  ${{ steps.version.outputs.VERSION }}
+          TAG:      ${{ steps.version.outputs.TAG }}
+        run: |
+          gh release create "$TAG" \
+              --title "Bolo $VERSION" \
+              --notes-file "$NOTES_FILE" \
+              "$DMG_PATH"
+
+      # ── 16. Cleanup keychain ──────────────────────────────────────────────────
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true

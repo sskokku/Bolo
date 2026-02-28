@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Direct distribution via Developer ID (not Mac App Store) -->
+    <key>method</key>
+    <string>developer-id</string>
+
+    <key>teamID</key>
+    <string>KJ47YGNM8Z</string>
+
+    <!-- Automatic signing: Xcode picks the right Developer ID cert -->
+    <key>signingStyle</key>
+    <string>automatic</string>
+
+    <!-- Strip Swift standard libraries (they ship with macOS 15) -->
+    <key>stripSwiftSymbols</key>
+    <true/>
+</dict>
+</plist>
