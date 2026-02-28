@@ -236,10 +236,8 @@ class MacOSTextInsertion {
         logger.info("insertViaClipboard — setting pasteboard and simulating Cmd+V")
         let pasteboard = NSPasteboard.general
 
-        // Save current clipboard contents
-        let previousContents = pasteboard.string(forType: .string)
-
-        // Set our text to clipboard
+        // Set our text to clipboard (caller already did this as a safety net,
+        // but we set it again in case the clipboard changed in the meantime)
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
 
@@ -257,14 +255,10 @@ class MacOSTextInsertion {
         keyUp?.flags = .maskCommand
         keyUp?.post(tap: .cghidEventTap)
 
-        logger.info("Cmd+V paste event posted")
+        logger.info("Cmd+V paste event posted — text remains on clipboard")
 
-        // Restore original clipboard after a short delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            if let previous = previousContents {
-                pasteboard.clearContents()
-                pasteboard.setString(previous, forType: .string)
-            }
-        }
+        // NOTE: We intentionally do NOT restore the old clipboard contents.
+        // The transcribed text stays on the clipboard so the user can
+        // manually Cmd+V if the simulated paste didn't reach the right app.
     }
 }

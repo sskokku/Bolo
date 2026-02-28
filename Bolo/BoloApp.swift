@@ -290,22 +290,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 // Insert text
                 appState.state = .inserting
 
-                // Check if we can actually insert (Accessibility is needed)
-                if !AXIsProcessTrusted() {
-                    // Can't insert — copy to clipboard and show alert
-                    logger.warning("Accessibility not granted — copying to clipboard instead")
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(resultText, forType: .string)
+                // Always copy to clipboard first as a safety net.
+                // If AX insertion works, the clipboard is a bonus backup.
+                // If it fails, the user can Cmd+V manually.
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.setString(resultText, forType: .string)
+                logger.info("Text copied to clipboard as safety net")
 
-                    showAccessibilityAlert(transcribedText: resultText)
-                } else {
-                    // Accessibility available — insert directly
+                // Try AX-based text insertion if Accessibility is granted
+                let trusted = AXIsProcessTrusted()
+                logger.info("Attempting text insertion — AXIsProcessTrusted: \(trusted)")
+
+                if trusted {
                     if case .command = mode {
                         try textInsertion.replaceSelectedText(with: resultText)
                     } else {
                         try textInsertion.insertText(resultText)
                     }
+                } else {
+                    // No Accessibility — show one-time alert
+                    showAccessibilityAlert(transcribedText: resultText)
                 }
 
                 // Save to transcription history
