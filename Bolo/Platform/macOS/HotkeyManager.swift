@@ -1,5 +1,9 @@
 import Carbon
 import Cocoa
+import os.log
+
+/// Logger for hotkey events — visible in Console.app under "com.bolo.app / HotkeyManager".
+private let logger = Logger(subsystem: "com.bolo.app", category: "HotkeyManager")
 
 /// Manages global hotkey detection for Push-to-Talk and Long-Talk modes.
 ///
@@ -31,6 +35,8 @@ class MacOSHotkeyManager: @unchecked Sendable {
     /// Start listening for global hotkey events.
     /// - Returns: `true` if the event tap was created successfully
     func start() -> Bool {
+        logger.info("Starting hotkey manager — AXIsProcessTrusted: \(AXIsProcessTrusted())")
+
         let eventMask: CGEventMask = (
             (1 << CGEventType.flagsChanged.rawValue) |
             (1 << CGEventType.keyDown.rawValue) |
@@ -51,6 +57,7 @@ class MacOSHotkeyManager: @unchecked Sendable {
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
+            logger.error("Failed to create CGEvent tap — check Accessibility permission")
             return false
         }
 
@@ -59,6 +66,7 @@ class MacOSHotkeyManager: @unchecked Sendable {
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
 
+        logger.info("Event tap created and enabled successfully")
         return true
     }
 
@@ -88,6 +96,7 @@ class MacOSHotkeyManager: @unchecked Sendable {
 
         // Re-enable the tap if it gets disabled by the system
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            logger.warning("Event tap disabled by system (timeout/user) — re-enabling")
             if let tap = eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
             }
@@ -101,15 +110,18 @@ class MacOSHotkeyManager: @unchecked Sendable {
 
             if fnPressed != isFnPressed {
                 isFnPressed = fnPressed
+                logger.info("fn key \(fnPressed ? "PRESSED" : "RELEASED") — longTalkActive: \(self.isLongTalkActive)")
 
                 if !isLongTalkActive {
                     if fnPressed {
                         pushToTalkStartTime = Date()
                         DispatchQueue.main.async { [weak self] in
+                            logger.info("Calling onPushToTalkStart")
                             self?.onPushToTalkStart?()
                         }
                     } else {
                         DispatchQueue.main.async { [weak self] in
+                            logger.info("Calling onPushToTalkEnd")
                             self?.onPushToTalkEnd?()
                         }
                     }
@@ -131,6 +143,7 @@ class MacOSHotkeyManager: @unchecked Sendable {
             if keyCode == 49 && isFnPressed && !isSpacePressed && !isLongTalkActive {
                 isSpacePressed = true
                 isLongTalkActive = true
+                logger.info("fn+Space detected — toggling Long-Talk")
                 DispatchQueue.main.async { [weak self] in
                     self?.onLongTalkToggle?()
                 }

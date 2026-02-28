@@ -1,5 +1,9 @@
 import SwiftUI
 import AppKit
+import os.log
+
+/// Unified logger for Bolo — messages appear in Console.app under subsystem "com.bolo.app".
+private let logger = Logger(subsystem: "com.bolo.app", category: "AppDelegate")
 
 /// Bolo (बोलो) - Voice Dictation App
 /// Main application entry point. Bolo runs as a menu bar app (LSUIElement)
@@ -146,7 +150,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
     private func startRecording(mode: RecordingMode) {
         Task { @MainActor in
-            guard case .idle = appState.state else { return }
+            logger.info("startRecording called — mode: \(String(describing: mode)), current state: \(String(describing: self.appState.state))")
+            guard case .idle = appState.state else {
+                logger.warning("startRecording aborted — state is not idle")
+                return
+            }
 
             // Check if command mode should be used
             let actualMode: RecordingMode
@@ -159,6 +167,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
             }
 
             do {
+                logger.info("Starting audio capture — mode: \(String(describing: actualMode))")
                 try audioCapture.startRecording()
                 appState.state = .recording(mode: actualMode)
                 appState.recordingDuration = 0
@@ -181,6 +190,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                     floatingToolbar.show()
                 }
             } catch {
+                logger.error("Audio capture failed: \(error.localizedDescription)")
                 appState.state = .error(.microphonePermissionDenied)
             }
         }
@@ -188,7 +198,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
     private func stopRecordingAndProcess() {
         Task { @MainActor in
-            guard case .recording(let mode) = appState.state else { return }
+            logger.info("stopRecordingAndProcess called — current state: \(String(describing: self.appState.state))")
+            guard case .recording(let mode) = appState.state else {
+                logger.warning("stopRecordingAndProcess aborted — not recording")
+                return
+            }
 
             // Stop timer
             recordingTimer?.invalidate()
@@ -212,6 +226,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
             appState.state = .processing
             menuBarController.updateIcon(for: appState.state)
+            logger.info("Sending \(wavData.count) bytes of audio to Gemini API")
 
             do {
                 let resultText: String
@@ -246,6 +261,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                         command: command
                     )
                 }
+
+                logger.info("Transcription result: \(resultText.prefix(100))")
 
                 // Insert text
                 appState.state = .inserting
@@ -346,6 +363,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
     @objc private func settingsDidChange() {
         refreshGeminiClient()
+
+        // If the user just entered their API key, clear the apiKeyMissing error
+        // so recording can proceed. Without this, the state stays stuck in .error
+        // and startRecording() silently returns.
+        if settings.hasValidAPIKey, case .error(.apiKeyMissing) = appState.state {
+            logger.info("API key entered — resetting state from error to idle")
+            appState.state = .idle
+            menuBarController.updateIcon(for: appState.state)
+        }
+
         if settings.showFloatingToolbar {
             floatingToolbar.show()
         } else {
