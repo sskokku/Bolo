@@ -88,7 +88,7 @@ class MacOSHotkeyManager: @unchecked Sendable {
         }
 
         logger.error("Both CGEvent tap and NSEvent monitors failed — hotkeys unavailable")
-        print("[Bolo HotkeyManager] BOTH mechanisms failed — hotkeys unavailable")
+        ErrorLogger.shared.logError(category: .hotkey, message: "Both CGEvent tap and NSEvent monitors failed — hotkeys unavailable")
         return false
     }
 
@@ -126,6 +126,7 @@ class MacOSHotkeyManager: @unchecked Sendable {
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
             logger.error("Failed to create CGEvent tap — Accessibility permission likely missing")
+            ErrorLogger.shared.logWarning(category: .hotkey, message: "CGEvent tap creation failed — Accessibility permission likely missing")
             return false
         }
 
@@ -177,6 +178,7 @@ class MacOSHotkeyManager: @unchecked Sendable {
         }
 
         logger.error("Failed to install NSEvent global monitors")
+        ErrorLogger.shared.logError(category: .hotkey, message: "Failed to install NSEvent global monitors")
         return false
     }
 
@@ -207,6 +209,7 @@ class MacOSHotkeyManager: @unchecked Sendable {
         // Re-enable the tap if it gets disabled by the system
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             logger.warning("Event tap disabled by system — re-enabling")
+            ErrorLogger.shared.logWarning(category: .hotkey, message: "Event tap disabled by system — re-enabling")
             if let tap = eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
             }

@@ -52,6 +52,7 @@ class MacOSAudioCapture: @unchecked Sendable {
         logger.info("Hardware format: \(hardwareFormat.sampleRate) Hz, \(hardwareFormat.channelCount) ch, \(hardwareFormat.commonFormat.rawValue) format")
 
         guard hardwareFormat.sampleRate > 0, hardwareFormat.channelCount > 0 else {
+            ErrorLogger.shared.logError(category: .audio, message: "Invalid hardware audio format (sample rate: \(hardwareFormat.sampleRate))")
             throw NSError(domain: "AudioCapture", code: -1, userInfo: [
                 NSLocalizedDescriptionKey: "Invalid hardware audio format (sample rate: \(hardwareFormat.sampleRate))"
             ])
@@ -64,6 +65,7 @@ class MacOSAudioCapture: @unchecked Sendable {
             channels: targetChannelCount,
             interleaved: true
         ) else {
+            ErrorLogger.shared.logError(category: .audio, message: "Failed to create target recording format")
             throw NSError(domain: "AudioCapture", code: -2, userInfo: [
                 NSLocalizedDescriptionKey: "Failed to create target recording format"
             ])
@@ -71,6 +73,7 @@ class MacOSAudioCapture: @unchecked Sendable {
 
         // Create a converter: hardware format → 16 kHz Int16 mono
         guard let converter = AVAudioConverter(from: hardwareFormat, to: targetFormat) else {
+            ErrorLogger.shared.logError(category: .audio, message: "Failed to create audio converter from \(hardwareFormat) to \(targetFormat)")
             throw NSError(domain: "AudioCapture", code: -3, userInfo: [
                 NSLocalizedDescriptionKey: "Failed to create audio converter from \(hardwareFormat) to \(targetFormat)"
             ])
@@ -142,6 +145,7 @@ class MacOSAudioCapture: @unchecked Sendable {
 
         guard status != .error, error == nil else {
             logger.error("Audio conversion failed: \(error?.localizedDescription ?? "unknown")")
+            ErrorLogger.shared.logError(category: .audio, message: "Audio conversion failed", error: error)
             return
         }
 

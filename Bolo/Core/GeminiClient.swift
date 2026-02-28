@@ -68,6 +68,7 @@ struct GeminiClient: TranscriptionProvider {
 
         // Validate audio size (max 20MB for inline data)
         guard audio.count < 20 * 1024 * 1024 else {
+            ErrorLogger.shared.logError(category: .api, message: "Audio too large: \(audio.count) bytes (max 20MB)")
             throw GeminiError.requestTooLarge
         }
 
@@ -135,17 +136,20 @@ struct GeminiClient: TranscriptionProvider {
     // MARK: - Private: Network
 
     private func sendRequest(_ request: GeminiRequest) async throws -> String {
+        let errorLog = ErrorLogger.shared
+
         guard !apiKey.isEmpty else {
+            errorLog.logError(category: .api, message: "API key is empty")
             throw GeminiError.invalidAPIKey
         }
 
         let urlString = "\(baseURL)/models/\(model):generateContent"
         guard let url = URL(string: urlString) else {
+            errorLog.logError(category: .api, message: "Invalid URL: \(urlString)")
             throw GeminiError.invalidResponse
         }
 
-        logger.info("Gemini API request → \(urlString)")
-        print("[Bolo] Gemini API request → \(urlString)")
+        errorLog.logInfo(category: .api, message: "Gemini API request → \(urlString)")
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
@@ -155,60 +159,49 @@ struct GeminiClient: TranscriptionProvider {
         urlRequest.httpBody = try JSONEncoder().encode(request)
 
         let bodySize = urlRequest.httpBody?.count ?? 0
-        logger.info("Request body size: \(bodySize) bytes")
-        print("[Bolo] Request body size: \(bodySize) bytes")
+        errorLog.logInfo(category: .api, message: "Request body size: \(bodySize) bytes")
 
         let (data, response): (Data, URLResponse)
         do {
             (data, response) = try await URLSession.shared.data(for: urlRequest)
         } catch {
-            logger.error("Network error: \(error.localizedDescription)")
-            print("[Bolo] Network error: \(error)")
+            errorLog.logError(category: .api, message: "Network error", error: error)
             throw GeminiError.networkError(error)
         }
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            errorLog.logError(category: .api, message: "Invalid response — not HTTPURLResponse")
             throw GeminiError.invalidResponse
         }
 
-        logger.info("Gemini API response — HTTP \(httpResponse.statusCode), body: \(data.count) bytes")
-        print("[Bolo] Gemini API response — HTTP \(httpResponse.statusCode), body: \(data.count) bytes")
+        errorLog.logInfo(category: .api, message: "Gemini API response — HTTP \(httpResponse.statusCode), body: \(data.count) bytes")
 
         // Handle HTTP errors
         if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
-            print("[Bolo] API key rejected (HTTP \(httpResponse.statusCode))")
+            errorLog.logError(category: .api, message: "API key rejected (HTTP \(httpResponse.statusCode))")
             throw GeminiError.invalidAPIKey
         }
 
         guard httpResponse.statusCode == 200 else {
             let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
-            logger.error("API error: HTTP \(httpResponse.statusCode) — \(errorBody.prefix(500))")
-            print("[Bolo] API error: HTTP \(httpResponse.statusCode) — \(errorBody.prefix(500))")
+            errorLog.logError(category: .api, message: "API error: HTTP \(httpResponse.statusCode) — \(String(errorBody.prefix(500)))")
             throw GeminiError.apiError("HTTP \(httpResponse.statusCode): \(errorBody)")
-        }
-
-        // Log raw response for debugging
-        if let responseStr = String(data: data, encoding: .utf8) {
-            print("[Bolo] Gemini raw response: \(responseStr.prefix(300))")
         }
 
         let geminiResponse: GeminiResponse
         do {
             geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
         } catch {
-            logger.error("JSON decode failed: \(error.localizedDescription)")
-            print("[Bolo] JSON decode failed: \(error)")
+            errorLog.logError(category: .api, message: "JSON decode failed", error: error)
             throw GeminiError.invalidResponse
         }
 
         guard let text = geminiResponse.candidates?.first?.content?.parts?.first?.text else {
-            logger.error("No text in response — candidates: \(geminiResponse.candidates?.count ?? 0)")
-            print("[Bolo] No text in Gemini response")
+            errorLog.logError(category: .api, message: "No text in response — candidates: \(geminiResponse.candidates?.count ?? 0)")
             throw GeminiError.noTextInResponse
         }
 
-        logger.info("Gemini returned: \(text.prefix(100))")
-        print("[Bolo] Gemini returned: \(text.prefix(100))")
+        errorLog.logInfo(category: .api, message: "Gemini returned: \(String(text.prefix(100)))")
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 

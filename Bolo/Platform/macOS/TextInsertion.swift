@@ -60,14 +60,17 @@ class MacOSTextInsertion {
         // No target PID — try AX-based insertion as fallback
         if trusted, let element = getFocusedElement() {
             if isPasswordField(element) {
+                ErrorLogger.shared.logWarning(category: .insertion, message: "Attempted insertion into password field")
                 throw InsertionError.passwordField
             }
 
             if tryDirectInsertion(element: element, text: text) {
                 logger.info("Text inserted via AX API (no target PID path)")
+                ErrorLogger.shared.logInfo(category: .insertion, message: "Text inserted via AX API (no target PID)")
                 return
             }
             logger.warning("AX direct insertion failed — falling back to clipboard")
+            ErrorLogger.shared.logWarning(category: .insertion, message: "AX direct insertion failed — falling back to clipboard")
         } else {
             logger.info("AX not available (trusted: \(trusted)) — using clipboard fallback")
         }
@@ -116,6 +119,7 @@ class MacOSTextInsertion {
         // No target PID — try AX-based replacement
         if trusted, let element = getFocusedElement() {
             if isPasswordField(element) {
+                ErrorLogger.shared.logWarning(category: .insertion, message: "Attempted replacement in password field")
                 throw InsertionError.passwordField
             }
 
@@ -127,9 +131,11 @@ class MacOSTextInsertion {
 
             if result == .success {
                 logger.info("Text replaced via AX API")
+                ErrorLogger.shared.logInfo(category: .insertion, message: "Text replaced via AX API")
                 return
             }
             logger.warning("AX replacement failed — falling back to clipboard")
+            ErrorLogger.shared.logWarning(category: .insertion, message: "AX replacement failed — falling back to clipboard")
         }
 
         // Last resort: clipboard with no target PID
@@ -278,6 +284,7 @@ class MacOSTextInsertion {
         guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true),
               let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false) else {
             logger.error("Failed to create CGEvent for Cmd+V")
+            ErrorLogger.shared.logError(category: .insertion, message: "Failed to create CGEvent for Cmd+V paste")
             return
         }
 

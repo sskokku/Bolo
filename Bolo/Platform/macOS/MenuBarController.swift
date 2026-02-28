@@ -61,6 +61,10 @@ class MenuBarController: ObservableObject {
         historyItem.target = self
         menu.addItem(historyItem)
 
+        let logsItem = NSMenuItem(title: "View Logs in Finder", action: #selector(revealLogs), keyEquivalent: "l")
+        logsItem.target = self
+        menu.addItem(logsItem)
+
         menu.addItem(NSMenuItem.separator())
 
         let aboutItem = NSMenuItem(title: "About Bolo", action: #selector(openAbout), keyEquivalent: "")
@@ -254,6 +258,11 @@ class MenuBarController: ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
 
         historyWindow = window
+    }
+
+    @objc private func revealLogs() {
+        let url = ErrorLogger.shared.getLogFileURL()
+        NSWorkspace.shared.selectFile(url.path, inFileViewerRootedAtPath: url.deletingLastPathComponent().path)
     }
 
     @objc private func openAbout() {

@@ -12,6 +12,7 @@
 		0A836B5AABB050B1A5127725 /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C354676290F6F32A6574C8E /* HistoryManager.swift */; };
 		15961179C5D835012A7430AF /* DictionaryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C96D3BB9E02414C0BB32C9C5 /* DictionaryManager.swift */; };
 		2172158196D16CF243D4EF94 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3678DD668214388C9CE1BAB0 /* MenuBarController.swift */; };
+		2818B7114D8BAEF7CF8A4E94 /* ErrorLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66FC11CE8911CA6D10EEB90D /* ErrorLogger.swift */; };
 		35AC36AE06FD592C86F8CA96 /* TranscriptionResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED01A656896A5B17C7E5913F /* TranscriptionResult.swift */; };
 		38BA79C5F9443BD1DACF42EA /* DictionaryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCC470B51F901FB871CF1A4 /* DictionaryEntry.swift */; };
 		3BB1A24341DB05830306F7AF /* Bolo-Icon.svg in Resources */ = {isa = PBXBuildFile; fileRef = 13DF340DCB46D7FE00373026 /* Bolo-Icon.svg */; };
@@ -41,6 +42,7 @@
 		3678DD668214388C9CE1BAB0 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		4E90347294BAFC27BE1D0428 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		589C5443017029E8A759E6D0 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		66FC11CE8911CA6D10EEB90D /* ErrorLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorLogger.swift; sourceTree = "<group>"; };
 		6BCC470B51F901FB871CF1A4 /* DictionaryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryEntry.swift; sourceTree = "<group>"; };
 		711DC145B32EAA3F1A37A117 /* GeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
 		8733F8D3F8A3B571F2FF57D5 /* HistoryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEntry.swift; sourceTree = "<group>"; };
@@ -91,6 +93,7 @@
 				C1C6CE109D78E4E7F847135E /* AppState.swift */,
 				94BBA41DF3195F7FB1898776 /* AudioProcessor.swift */,
 				C96D3BB9E02414C0BB32C9C5 /* DictionaryManager.swift */,
+				66FC11CE8911CA6D10EEB90D /* ErrorLogger.swift */,
 				711DC145B32EAA3F1A37A117 /* GeminiClient.swift */,
 				8C354676290F6F32A6574C8E /* HistoryManager.swift */,
 				CC906FD27136AAE22AFCD171 /* SettingsModel.swift */,
@@ -232,6 +235,7 @@
 				38BA79C5F9443BD1DACF42EA /* DictionaryEntry.swift in Sources */,
 				15961179C5D835012A7430AF /* DictionaryManager.swift in Sources */,
 				8DC62A62FB3092F3118DAE97 /* DictionaryView.swift in Sources */,
+				2818B7114D8BAEF7CF8A4E94 /* ErrorLogger.swift in Sources */,
 				E27F283DABA9EE0373D91FD7 /* FloatingToolbar.swift in Sources */,
 				DFEBAB6509761DDE80103F94 /* GeminiClient.swift in Sources */,
 				09AD9F521C05E643A7BCC2C9 /* HistoryEntry.swift in Sources */,

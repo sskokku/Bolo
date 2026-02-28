@@ -44,6 +44,8 @@ enum SettingsKey {
     static let enableCommandMode = "enable_command_mode"
     static let hasCompletedOnboarding = "has_completed_onboarding"
     static let launchAtLogin = "launch_at_login"
+    static let maxLogFileSize = "max_log_file_size"
+    static let enableLogging = "enable_logging"
 }
 
 // MARK: - Settings Defaults
@@ -60,6 +62,8 @@ enum SettingsDefaults {
     static let enableCommandMode = true
     static let hasCompletedOnboarding = false
     static let launchAtLogin = false
+    static let maxLogFileSize = 5 // MB
+    static let enableLogging = true
 }
 
 // MARK: - Settings
@@ -112,6 +116,14 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var maxLogFileSize: Int {
+        didSet { UserDefaults.standard.set(maxLogFileSize, forKey: SettingsKey.maxLogFileSize) }
+    }
+
+    @Published var enableLogging: Bool {
+        didSet { UserDefaults.standard.set(enableLogging, forKey: SettingsKey.enableLogging) }
+    }
+
     // MARK: - Computed
 
     var hasValidAPIKey: Bool {
@@ -156,6 +168,9 @@ class AppSettings: ObservableObject {
         self.enableCommandMode = defaults.object(forKey: SettingsKey.enableCommandMode) as? Bool ?? SettingsDefaults.enableCommandMode
         self.hasCompletedOnboarding = defaults.bool(forKey: SettingsKey.hasCompletedOnboarding)
         self.launchAtLogin = defaults.bool(forKey: SettingsKey.launchAtLogin)
+        let storedLogSize = defaults.integer(forKey: SettingsKey.maxLogFileSize)
+        self.maxLogFileSize = storedLogSize > 0 ? storedLogSize : SettingsDefaults.maxLogFileSize
+        self.enableLogging = defaults.object(forKey: SettingsKey.enableLogging) as? Bool ?? SettingsDefaults.enableLogging
     }
 }
 

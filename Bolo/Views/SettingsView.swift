@@ -30,8 +30,13 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Dictionary", systemImage: "book")
                 }
+
+            loggingTab
+                .tabItem {
+                    Label("Logging", systemImage: "doc.text")
+                }
         }
-        .frame(width: 480, height: 360)
+        .frame(width: 480, height: 380)
     }
 
     // MARK: - General Tab
@@ -190,6 +195,72 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    // MARK: - Logging Tab
+
+    private var loggingTab: some View {
+        Form {
+            Section("Error Logging") {
+                Toggle("Enable Logging", isOn: $settings.enableLogging)
+
+                Text("Structured logs are written to ~/Library/Logs/Bolo/bolo.log")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("Storage") {
+                Picker("Max Log File Size", selection: $settings.maxLogFileSize) {
+                    Text("1 MB").tag(1)
+                    Text("5 MB (Recommended)").tag(5)
+                    Text("10 MB").tag(10)
+                    Text("25 MB").tag(25)
+                }
+
+                Text("When the log file exceeds this size, it is automatically purged and you'll be notified.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                HStack {
+                    Text("Current Size")
+                    Spacer()
+                    Text(logFileSizeText)
+                        .foregroundColor(.secondary)
+                }
+
+                Text("Logs are also auto-purged daily at 11:59 PM.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("Actions") {
+                HStack {
+                    Button("Reveal Log File in Finder") {
+                        let url = ErrorLogger.shared.getLogFileURL()
+                        NSWorkspace.shared.selectFile(url.path, inFileViewerRootedAtPath: url.deletingLastPathComponent().path)
+                    }
+
+                    Spacer()
+
+                    Button("Purge Log Now") {
+                        ErrorLogger.shared.purgeLogFile()
+                    }
+                    .foregroundColor(.red)
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var logFileSizeText: String {
+        let bytes = ErrorLogger.shared.getLogFileSize()
+        if bytes < 1024 {
+            return "\(bytes) B"
+        } else if bytes < 1_048_576 {
+            return String(format: "%.1f KB", Double(bytes) / 1024.0)
+        } else {
+            return String(format: "%.2f MB", Double(bytes) / 1_048_576.0)
+        }
     }
 
     // MARK: - API Test

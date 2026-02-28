@@ -58,6 +58,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
         }
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        ErrorLogger.shared.logInfo(category: .app, message: "Bolo shutting down")
+    }
+
     // MARK: - Setup
 
     private func setupComponents() {
@@ -119,12 +123,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
             hotkeyStartSucceeded = true
             if hotkeyManager.usingEventTap {
                 logger.info("Hotkey manager started — using CGEvent tap (full functionality)")
+                ErrorLogger.shared.logInfo(category: .hotkey, message: "Hotkey manager started — CGEvent tap (full)")
             } else {
                 logger.info("Hotkey manager started — using NSEvent monitors (fallback, limited)")
+                ErrorLogger.shared.logWarning(category: .hotkey, message: "Hotkey manager using NSEvent fallback (limited)")
             }
         } else {
             hotkeyStartSucceeded = false
             logger.error("Hotkey manager FAILED to start — no hotkey detection available")
+            ErrorLogger.shared.logError(category: .hotkey, message: "Hotkey manager FAILED to start — no hotkey detection")
         }
     }
 
@@ -134,6 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
             if !MacOSAudioCapture.hasPermission {
                 let granted = await MacOSAudioCapture.requestPermission()
                 if !granted {
+                    ErrorLogger.shared.logError(category: .audio, message: "Microphone permission denied by user")
                     await MainActor.run {
                         appState.state = .error(.microphonePermissionDenied)
                     }
@@ -144,6 +152,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
             // prompt for Accessibility permission
             if !hotkeyStartSucceeded {
                 logger.warning("Hotkey manager failed entirely — prompting for Accessibility permission")
+                ErrorLogger.shared.logError(category: .hotkey, message: "Accessibility permission denied — hotkeys unavailable")
                 MacOSHotkeyManager.requestAccessibilityPermission()
                 await MainActor.run {
                     appState.state = .error(.accessibilityPermissionDenied)
@@ -160,6 +169,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
             // Check API key — if missing, open settings to prompt entry
             if !settings.hasValidAPIKey {
+                ErrorLogger.shared.logWarning(category: .api, message: "API key not configured — prompting user")
                 await MainActor.run {
                     appState.state = .error(.apiKeyMissing)
                     menuBarController.openSettingsWindow()
@@ -196,6 +206,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
             do {
                 logger.info("Starting audio capture — mode: \(String(describing: actualMode))")
+                ErrorLogger.shared.logInfo(category: .audio, message: "Starting audio capture — mode: \(actualMode)")
                 try audioCapture.startRecording()
                 appState.state = .recording(mode: actualMode)
                 appState.recordingDuration = 0
@@ -219,6 +230,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 }
             } catch {
                 logger.error("Audio capture failed: \(error.localizedDescription)")
+                ErrorLogger.shared.logError(category: .audio, message: "Audio capture failed to start", error: error)
                 appState.state = .error(.microphonePermissionDenied)
             }
         }
@@ -242,12 +254,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
             // Validate recording length
             guard appState.recordingDuration > 0.3 else {
+                ErrorLogger.shared.logWarning(category: .audio, message: "Recording too short: \(appState.recordingDuration)s")
                 appState.state = .error(.audioTooShort)
                 resetToIdleAfterDelay()
                 return
             }
 
             guard let client = geminiClient else {
+                ErrorLogger.shared.logError(category: .api, message: "No Gemini client — API key missing")
                 appState.state = .error(.apiKeyMissing)
                 resetToIdleAfterDelay()
                 return
@@ -275,6 +289,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 case .command:
                     // Get selected text for command mode
                     guard let selectedText = textInsertion.getSelectedText() else {
+                        ErrorLogger.shared.logError(category: .insertion, message: "Command mode: no selected text available")
                         appState.state = .error(.insertionFailed)
                         resetToIdleAfterDelay()
                         return
@@ -292,6 +307,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 }
 
                 logger.info("Transcription result: \(resultText.prefix(100))")
+                ErrorLogger.shared.logInfo(category: .app, message: "Transcription successful — \(resultText.count) chars, mode: \(mode)")
 
                 // Insert text
                 appState.state = .inserting
@@ -377,6 +393,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                     appError = .apiError(error.localizedDescription)
                 }
 
+                ErrorLogger.shared.logError(
+                    category: .app,
+                    message: "Recording pipeline failed: \(error.localizedDescription)",
+                    appState: String(describing: appError)
+                )
                 appState.state = .error(appError)
                 menuBarController.updateIcon(for: appState.state)
                 resetToIdleAfterDelay()
@@ -421,6 +442,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
     }
 
     nonisolated func audioCaptureDidFail(_ error: Error) {
+        ErrorLogger.shared.logError(category: .audio, message: "Audio capture delegate failure", error: error)
         Task { @MainActor in
             self.appState.state = .error(.microphonePermissionDenied)
         }
