@@ -40,6 +40,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
     private var historyManager: HistoryManager!
     private var recordingTimer: Timer?
     private var onboardingWindow: NSWindow?
+    /// The app that was frontmost when recording started — we'll re-activate it for text insertion.
+    private var targetApp: NSRunningApplication?
 
     let appState = AppState()
     let settings = AppSettings.shared
@@ -179,6 +181,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 return
             }
 
+            // Remember which app the user was in — we'll re-activate it for text insertion
+            targetApp = NSWorkspace.shared.frontmostApplication
+            logger.info("Target app for insertion: \(self.targetApp?.localizedName ?? "unknown")")
+
             // Check if command mode should be used
             let actualMode: RecordingMode
             if mode == .pushToTalk,
@@ -297,6 +303,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 pasteboard.clearContents()
                 pasteboard.setString(resultText, forType: .string)
                 logger.info("Text copied to clipboard as safety net")
+
+                // Re-activate the app the user was in when they started recording.
+                // During the 2-3 seconds of API processing, focus may have shifted.
+                if let target = self.targetApp, !target.isTerminated {
+                    logger.info("Re-activating target app: \(target.localizedName ?? "unknown")")
+                    target.activate()
+                    // Give the app time to come to front and establish focus
+                    try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
+                }
 
                 // Try AX-based text insertion if Accessibility is granted
                 let trusted = AXIsProcessTrusted()

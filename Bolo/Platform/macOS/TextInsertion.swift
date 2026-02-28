@@ -233,29 +233,32 @@ class MacOSTextInsertion {
     // MARK: - Private: Clipboard Fallback
 
     private func insertViaClipboard(_ text: String) {
-        logger.info("insertViaClipboard — setting pasteboard and simulating Cmd+V")
-        let pasteboard = NSPasteboard.general
+        logger.info("insertViaClipboard — simulating Cmd+V (text already on clipboard)")
 
-        // Set our text to clipboard (caller already did this as a safety net,
-        // but we set it again in case the clipboard changed in the meantime)
+        // Ensure text is on clipboard (caller should have set it, but be safe)
+        let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
 
-        // Small delay to ensure pasteboard is updated before paste event
-        usleep(50_000) // 50ms
+        // Wait for the pasteboard to be ready and the target app to have focus
+        usleep(100_000) // 100ms
 
         // Simulate Cmd+V paste via CGEvent
-        let source = CGEventSource(stateID: .hidSystemState)
+        // Use .combinedSessionState to work better with the active app
+        let source = CGEventSource(stateID: .combinedSessionState)
 
-        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true) // V key
+        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true) // V key = 0x09
         keyDown?.flags = .maskCommand
         keyDown?.post(tap: .cghidEventTap)
+
+        // Small delay between key down and key up for reliable detection
+        usleep(20_000) // 20ms
 
         let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false)
         keyUp?.flags = .maskCommand
         keyUp?.post(tap: .cghidEventTap)
 
-        logger.info("Cmd+V paste event posted — text remains on clipboard")
+        logger.info("Cmd+V paste event posted — text remains on clipboard for manual paste")
 
         // NOTE: We intentionally do NOT restore the old clipboard contents.
         // The transcribed text stays on the clipboard so the user can
