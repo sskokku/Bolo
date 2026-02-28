@@ -14,9 +14,6 @@ settings:
     PRODUCT_BUNDLE_IDENTIFIER: com.bolo.app
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
-    INFOPLIST_FILE: Bolo/Info.plist
-    CODE_SIGN_ENTITLEMENTS: Bolo/Bolo.entitlements
-    GENERATE_INFOPLIST_FILE: NO
     PRODUCT_NAME: Bolo
 
 targets:
@@ -27,16 +24,16 @@ targets:
       - path: Bolo
         excludes:
           - "**/.DS_Store"
+          - "**/Info.plist"
     settings:
       base:
         CODE_SIGN_STYLE: Automatic
         PRODUCT_BUNDLE_IDENTIFIER: com.bolo.app
-        INFOPLIST_FILE: Bolo/Info.plist
         CODE_SIGN_ENTITLEMENTS: Bolo/Bolo.entitlements
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_STRICT_CONCURRENCY: complete
-    info:
-      path: Bolo/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Bolo/Info.plist
     entitlements:
       path: Bolo/Bolo.entitlements
