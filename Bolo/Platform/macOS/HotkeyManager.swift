@@ -8,9 +8,9 @@ private let logger = Logger(subsystem: "com.bolo.app", category: "HotkeyManager"
 /// Manages global hotkey detection for Push-to-Talk and Long-Talk modes.
 ///
 /// Uses a CGEvent tap to intercept keyboard events system-wide.
-/// Default hotkeys match WhisprFlow conventions:
-/// - `fn` (hold) → Push-to-Talk
-/// - `fn + Space` → Toggle Long-Talk mode
+/// Hotkeys:
+/// - `Ctrl+Shift` (hold both) → Push-to-Talk (record while held, transcribe on release)
+/// - `Ctrl+Shift+Space` → Toggle Long-Talk mode (press to start/stop)
 ///
 /// Requires Accessibility permission (System Settings → Privacy & Security → Accessibility).
 class MacOSHotkeyManager: @unchecked Sendable {
@@ -25,10 +25,18 @@ class MacOSHotkeyManager: @unchecked Sendable {
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var isFnPressed = false
+
+    /// Tracks whether Ctrl+Shift are currently held together.
+    private var isHotkeyHeld = false
     private var isSpacePressed = false
     private var isLongTalkActive = false
     private var pushToTalkStartTime: Date?
+
+    /// The modifier combo we listen for: Control + Shift (no other modifiers).
+    private let requiredModifiers: CGEventFlags = [.maskControl, .maskShift]
+
+    /// Mask of all modifier keys we care about (to exclude Cmd, Option, etc.).
+    private let allModifiersMask: CGEventFlags = [.maskControl, .maskShift, .maskCommand, .maskAlternate]
 
     // MARK: - Lifecycle
 
@@ -103,30 +111,34 @@ class MacOSHotkeyManager: @unchecked Sendable {
             return Unmanaged.passRetained(event)
         }
 
-        // Handle fn key (modifier flags changed)
+        // Handle Ctrl+Shift modifier combo (flagsChanged fires when any modifier key changes)
         if type == .flagsChanged {
             let flags = event.flags
-            let fnPressed = flags.contains(.maskSecondaryFn)
+            // Check that exactly Ctrl+Shift are held (not Cmd or Option)
+            let relevantFlags = flags.intersection(allModifiersMask)
+            let hotkeyHeld = relevantFlags == requiredModifiers
 
-            if fnPressed != isFnPressed {
-                isFnPressed = fnPressed
-                logger.info("fn key \(fnPressed ? "PRESSED" : "RELEASED") — longTalkActive: \(self.isLongTalkActive)")
+            if hotkeyHeld != isHotkeyHeld {
+                isHotkeyHeld = hotkeyHeld
+                logger.info("Ctrl+Shift \(hotkeyHeld ? "PRESSED" : "RELEASED") — longTalkActive: \(self.isLongTalkActive)")
 
                 if !isLongTalkActive {
-                    if fnPressed {
+                    if hotkeyHeld {
+                        // Ctrl+Shift pressed → start Push-to-Talk recording
                         pushToTalkStartTime = Date()
                         DispatchQueue.main.async { [weak self] in
                             logger.info("Calling onPushToTalkStart")
                             self?.onPushToTalkStart?()
                         }
                     } else {
+                        // Ctrl+Shift released → stop recording and transcribe
                         DispatchQueue.main.async { [weak self] in
                             logger.info("Calling onPushToTalkEnd")
                             self?.onPushToTalkEnd?()
                         }
                     }
-                } else if !fnPressed {
-                    // In long-talk mode, fn release stops it
+                } else if !hotkeyHeld {
+                    // In long-talk mode, releasing Ctrl+Shift stops it
                     isLongTalkActive = false
                     DispatchQueue.main.async { [weak self] in
                         self?.onLongTalkToggle?()
@@ -135,15 +147,15 @@ class MacOSHotkeyManager: @unchecked Sendable {
             }
         }
 
-        // Handle Space key for Long-Talk toggle (fn + Space)
+        // Handle Space key for Long-Talk toggle (Ctrl+Shift+Space)
         if type == .keyDown {
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
             // Space = keycode 49
-            if keyCode == 49 && isFnPressed && !isSpacePressed && !isLongTalkActive {
+            if keyCode == 49 && isHotkeyHeld && !isSpacePressed && !isLongTalkActive {
                 isSpacePressed = true
                 isLongTalkActive = true
-                logger.info("fn+Space detected — toggling Long-Talk")
+                logger.info("Ctrl+Shift+Space detected — toggling Long-Talk")
                 DispatchQueue.main.async { [weak self] in
                     self?.onLongTalkToggle?()
                 }

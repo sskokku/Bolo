@@ -47,7 +47,7 @@ struct SettingsView: View {
                 HStack {
                     Text("Push-to-Talk")
                     Spacer()
-                    Text("fn (hold)")
+                    Text("Ctrl+Shift (hold)")
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
@@ -60,7 +60,7 @@ struct SettingsView: View {
                 HStack {
                     Text("Long-Talk Toggle")
                     Spacer()
-                    Text("fn + Space")
+                    Text("Ctrl+Shift+Space")
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)

@@ -195,9 +195,9 @@ struct OnboardingView: View {
                 .fontWeight(.bold)
 
             VStack(alignment: .leading, spacing: 12) {
-                Label("Hold **fn** to dictate", systemImage: "hand.tap")
-                Label("Press **fn + Space** for long-talk mode", systemImage: "text.bubble")
-                Label("Select text + hold **fn** for commands", systemImage: "wand.and.stars")
+                Label("Hold **Ctrl+Shift** to dictate", systemImage: "hand.tap")
+                Label("Press **Ctrl+Shift+Space** for long-talk mode", systemImage: "text.bubble")
+                Label("Select text + hold **Ctrl+Shift** for commands", systemImage: "wand.and.stars")
             }
             .font(.body)
 

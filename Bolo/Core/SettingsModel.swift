@@ -23,8 +23,8 @@ enum SettingsKey {
 /// Default values for all settings.
 enum SettingsDefaults {
     static let model = "gemini-2.5-flash"
-    static let pushToTalkKey = "fn"
-    static let longTalkKey = "fn+space"
+    static let pushToTalkKey = "ctrl+shift"
+    static let longTalkKey = "ctrl+shift+space"
     static let showFloatingToolbar = true
     static let autoLearnDictionary = true
     static let maxRecordingDuration: TimeInterval = 300 // 5 minutes
