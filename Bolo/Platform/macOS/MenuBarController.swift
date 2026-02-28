@@ -3,6 +3,7 @@ import AppKit
 
 /// Manages the NSStatusItem (menu bar icon) and its dropdown menu.
 /// Updates the icon to reflect the current app state (idle, recording, processing, error).
+/// Supports a live SwiftUI indicator mode where waveform and duration are shown inline.
 ///
 /// Since Bolo is an LSUIElement app (no Dock icon, no standard app menu),
 /// we manage settings/dictionary/history windows ourselves using NSWindow.
@@ -14,6 +15,10 @@ class MenuBarController: ObservableObject {
     private var settingsWindow: NSWindow?
     private var dictionaryWindow: NSWindow?
     private var historyWindow: NSWindow?
+
+    // Live indicator state
+    private var hostingView: NSHostingView<MenuBarIndicatorView>?
+    private var isLiveIndicatorActive = false
 
     init(appState: AppState) {
         self.appState = appState
@@ -30,10 +35,14 @@ class MenuBarController: ObservableObject {
             button.image?.isTemplate = true
         }
 
-        // Build the dropdown menu
+        statusItem.menu = buildMenu()
+    }
+
+    /// Build the dropdown menu (reusable for both static and live indicator modes).
+    private func buildMenu() -> NSMenu {
         let menu = NSMenu()
 
-        let statusMenuItem = NSMenuItem(title: "Bolo — Ready", action: nil, keyEquivalent: "")
+        let statusMenuItem = NSMenuItem(title: "Bolo — \(appState.statusText)", action: nil, keyEquivalent: "")
         statusMenuItem.isEnabled = false
         statusMenuItem.tag = 100 // Tag for updating status text
         menu.addItem(statusMenuItem)
@@ -64,13 +73,81 @@ class MenuBarController: ObservableObject {
         quitItem.target = self
         menu.addItem(quitItem)
 
-        statusItem.menu = menu
+        return menu
+    }
+
+    // MARK: - Live Indicator
+
+    /// Switch the status item to show the live SwiftUI indicator.
+    func enableLiveIndicator() {
+        guard !isLiveIndicatorActive else { return }
+        isLiveIndicatorActive = true
+
+        let indicatorView = MenuBarIndicatorView(appState: appState)
+        let hosting = NSHostingView(rootView: indicatorView)
+
+        // Remove the image — we are replacing it with the live view
+        statusItem.button?.image = nil
+        statusItem.button?.title = ""
+
+        // Remove the static menu so clicks route to our action handler
+        statusItem.menu = nil
+
+        if let button = statusItem.button {
+            hosting.translatesAutoresizingMaskIntoConstraints = false
+            button.addSubview(hosting)
+            NSLayoutConstraint.activate([
+                hosting.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+                hosting.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+                hosting.topAnchor.constraint(equalTo: button.topAnchor),
+                hosting.bottomAnchor.constraint(equalTo: button.bottomAnchor),
+            ])
+
+            // Set up click action to open the menu manually
+            button.target = self
+            button.action = #selector(statusItemClicked(_:))
+        }
+
+        hostingView = hosting
+        statusItem.length = NSStatusItem.variableLength
+    }
+
+    /// Switch back to the standard SF Symbol icon mode.
+    func disableLiveIndicator() {
+        guard isLiveIndicatorActive else { return }
+        isLiveIndicatorActive = false
+
+        // Remove the hosting view
+        hostingView?.removeFromSuperview()
+        hostingView = nil
+
+        // Restore the static menu
+        statusItem.menu = buildMenu()
+
+        // Reset button click handler
+        statusItem.button?.target = nil
+        statusItem.button?.action = nil
+
+        // Restore icon
+        updateIcon(for: appState.state)
+    }
+
+    /// Handle clicks when live indicator is active — show menu manually.
+    @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
+        let menu = buildMenu()
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height + 5), in: sender)
     }
 
     // MARK: - Icon Updates
 
     /// Update the menu bar icon to reflect the current app state.
+    /// When the live indicator is active, SwiftUI auto-updates — this is a no-op.
     func updateIcon(for state: RecordingState) {
+        if isLiveIndicatorActive {
+            // SwiftUI view updates automatically via @ObservedObject
+            return
+        }
+
         let symbolName: String
         switch state {
         case .idle:

@@ -72,9 +72,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
         menuBarController = MenuBarController(appState: appState)
         floatingToolbar = FloatingToolbarController(appState: appState)
 
-        if settings.showFloatingToolbar {
-            floatingToolbar.show()
-        }
+        // Apply initial indicator style (floating pill, menu bar, or both)
+        applyIndicatorStyle(settings.indicatorStyle)
 
         // Initialize Gemini client if API key exists
         refreshGeminiClient()
@@ -215,7 +214,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 }
 
                 menuBarController.updateIcon(for: appState.state)
-                if settings.showFloatingToolbar {
+                if settings.indicatorStyle.showsFloatingPill {
                     floatingToolbar.show()
                 }
             } catch {
@@ -441,10 +440,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
             menuBarController.updateIcon(for: appState.state)
         }
 
-        if settings.showFloatingToolbar {
+        // Apply indicator style changes
+        applyIndicatorStyle(settings.indicatorStyle)
+    }
+
+    // MARK: - Indicator Style
+
+    /// Apply the indicator style — show/hide floating pill and enable/disable live menu bar indicator.
+    private func applyIndicatorStyle(_ style: IndicatorStyle) {
+        if style.showsFloatingPill {
             floatingToolbar.show()
         } else {
             floatingToolbar.hide()
+        }
+
+        if style.showsMenuBarIndicator {
+            menuBarController.enableLiveIndicator()
+        } else {
+            menuBarController.disableLiveIndicator()
         }
     }
 

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		09AD9F521C05E643A7BCC2C9 /* HistoryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733F8D3F8A3B571F2FF57D5 /* HistoryEntry.swift */; };
+		0A54791ED890E34977E6C288 /* MenuBarIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FEB26B8E24610E8772D3820 /* MenuBarIndicatorView.swift */; };
 		0A836B5AABB050B1A5127725 /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C354676290F6F32A6574C8E /* HistoryManager.swift */; };
 		15961179C5D835012A7430AF /* DictionaryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C96D3BB9E02414C0BB32C9C5 /* DictionaryManager.swift */; };
 		2172158196D16CF243D4EF94 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3678DD668214388C9CE1BAB0 /* MenuBarController.swift */; };
@@ -31,6 +32,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0FEB26B8E24610E8772D3820 /* MenuBarIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarIndicatorView.swift; sourceTree = "<group>"; };
 		12C3EF136E908A113369C5E0 /* TextInsertion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInsertion.swift; sourceTree = "<group>"; };
 		13DF340DCB46D7FE00373026 /* Bolo-Icon.svg */ = {isa = PBXFileReference; path = "Bolo-Icon.svg"; sourceTree = "<group>"; };
 		2583510F395154C8336E6460 /* Bolo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Bolo.entitlements; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 			children = (
 				B055BBF3096C9B746080CCE4 /* DictionaryView.swift */,
 				B75F04D918BE25D45AC9EF84 /* HistoryView.swift */,
+				0FEB26B8E24610E8772D3820 /* MenuBarIndicatorView.swift */,
 				589C5443017029E8A759E6D0 /* OnboardingView.swift */,
 				A81D5296D4284D17EC85F6D3 /* SettingsView.swift */,
 			);
@@ -236,6 +239,7 @@
 				B29F5289FB0B542828F4CCA4 /* HistoryView.swift in Sources */,
 				9F1BB66F4B4776C2CBC093D9 /* HotkeyManager.swift in Sources */,
 				2172158196D16CF243D4EF94 /* MenuBarController.swift in Sources */,
+				0A54791ED890E34977E6C288 /* MenuBarIndicatorView.swift in Sources */,
 				EDCEE448510AEF6C171969D6 /* OnboardingView.swift in Sources */,
 				E4EBA6114A915152B484B684 /* SettingsModel.swift in Sources */,
 				4606189AC10186C22E178924 /* SettingsView.swift in Sources */,

@@ -39,7 +39,17 @@ struct SettingsView: View {
     private var generalTab: some View {
         Form {
             Section("Appearance") {
-                Toggle("Show Floating Toolbar", isOn: $settings.showFloatingToolbar)
+                Picker("Indicator Style", selection: $settings.indicatorStyle) {
+                    ForEach(IndicatorStyle.allCases) { style in
+                        Text(style.displayName).tag(style)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Text("Choose where to show the recording indicator.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Toggle("Launch at Login", isOn: $settings.launchAtLogin)
             }
 

@@ -2,6 +2,33 @@ import Foundation
 import Security
 import ServiceManagement
 
+// MARK: - Indicator Style
+
+/// The visual indicator style shown during recording.
+enum IndicatorStyle: String, CaseIterable, Identifiable {
+    case floatingPill = "floating_pill"
+    case menuBar = "menu_bar"
+    case both = "both"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .floatingPill: return "Floating Pill"
+        case .menuBar: return "Menu Bar"
+        case .both: return "Both"
+        }
+    }
+
+    var showsFloatingPill: Bool {
+        self == .floatingPill || self == .both
+    }
+
+    var showsMenuBarIndicator: Bool {
+        self == .menuBar || self == .both
+    }
+}
+
 // MARK: - Settings Keys
 
 /// UserDefaults keys for app preferences.
@@ -10,7 +37,8 @@ enum SettingsKey {
     static let model = "gemini_model"
     static let pushToTalkKey = "hotkey_push_to_talk"
     static let longTalkKey = "hotkey_long_talk"
-    static let showFloatingToolbar = "show_floating_toolbar"
+    static let showFloatingToolbar = "show_floating_toolbar" // legacy, migrated
+    static let indicatorStyle = "indicator_style"
     static let autoLearnDictionary = "auto_learn_dictionary"
     static let maxRecordingDuration = "max_recording_duration"
     static let enableCommandMode = "enable_command_mode"
@@ -25,7 +53,8 @@ enum SettingsDefaults {
     static let model = "gemini-2.5-flash"
     static let pushToTalkKey = "ctrl+shift"
     static let longTalkKey = "ctrl+shift+space"
-    static let showFloatingToolbar = true
+    static let showFloatingToolbar = true // legacy
+    static let indicatorStyle: IndicatorStyle = .floatingPill
     static let autoLearnDictionary = true
     static let maxRecordingDuration: TimeInterval = 300 // 5 minutes
     static let enableCommandMode = true
@@ -52,9 +81,13 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(model, forKey: SettingsKey.model) }
     }
 
-    @Published var showFloatingToolbar: Bool {
-        didSet { UserDefaults.standard.set(showFloatingToolbar, forKey: SettingsKey.showFloatingToolbar) }
+    @Published var indicatorStyle: IndicatorStyle {
+        didSet { UserDefaults.standard.set(indicatorStyle.rawValue, forKey: SettingsKey.indicatorStyle) }
     }
+
+    /// Backward-compatible computed property.
+    var showFloatingToolbar: Bool { indicatorStyle.showsFloatingPill }
+    var showMenuBarIndicator: Bool { indicatorStyle.showsMenuBarIndicator }
 
     @Published var autoLearnDictionary: Bool {
         didSet { UserDefaults.standard.set(autoLearnDictionary, forKey: SettingsKey.autoLearnDictionary) }
@@ -106,7 +139,18 @@ class AppSettings: ObservableObject {
         let defaults = UserDefaults.standard
         self.apiKey = KeychainHelper.load(SettingsKey.apiKey) ?? ""
         self.model = defaults.string(forKey: SettingsKey.model) ?? SettingsDefaults.model
-        self.showFloatingToolbar = defaults.object(forKey: SettingsKey.showFloatingToolbar) as? Bool ?? SettingsDefaults.showFloatingToolbar
+        // Migrate from old showFloatingToolbar bool to new indicatorStyle enum
+        let resolvedStyle: IndicatorStyle
+        if let rawStyle = defaults.string(forKey: SettingsKey.indicatorStyle),
+           let style = IndicatorStyle(rawValue: rawStyle) {
+            resolvedStyle = style
+        } else {
+            let oldShowToolbar = defaults.object(forKey: SettingsKey.showFloatingToolbar) as? Bool
+                ?? SettingsDefaults.showFloatingToolbar
+            resolvedStyle = oldShowToolbar ? .floatingPill : .menuBar
+            defaults.set(resolvedStyle.rawValue, forKey: SettingsKey.indicatorStyle)
+        }
+        self.indicatorStyle = resolvedStyle
         self.autoLearnDictionary = defaults.object(forKey: SettingsKey.autoLearnDictionary) as? Bool ?? SettingsDefaults.autoLearnDictionary
         self.maxRecordingDuration = defaults.object(forKey: SettingsKey.maxRecordingDuration) as? TimeInterval ?? SettingsDefaults.maxRecordingDuration
         self.enableCommandMode = defaults.object(forKey: SettingsKey.enableCommandMode) as? Bool ?? SettingsDefaults.enableCommandMode
