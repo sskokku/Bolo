@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Primary gradient - vibrant indigo to purple -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1"/>
+      <stop offset="50%" style="stop-color:#7C3AED"/>
+      <stop offset="100%" style="stop-color:#8B5CF6"/>
+    </linearGradient>
+    
+    <!-- Highlight gradient for top -->
+    <linearGradient id="highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.25"/>
+      <stop offset="50%" style="stop-color:#FFFFFF;stop-opacity:0"/>
+    </linearGradient>
+    
+    <!-- Shadow -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="25" flood-color="#4F46E5" flood-opacity="0.4"/>
+    </filter>
+    
+    <!-- Glow for sound waves -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background rounded square (macOS app icon style) -->
+  <rect x="64" y="64" width="896" height="896" rx="200" ry="200" fill="url(#bgGradient)" filter="url(#dropShadow)"/>
+  
+  <!-- Top highlight -->
+  <rect x="64" y="64" width="896" height="500" rx="200" ry="200" fill="url(#highlight)"/>
+  
+  <!-- Microphone body -->
+  <g transform="translate(512, 512)">
+    <!-- Mic head (rounded rectangle) -->
+    <rect x="-90" y="-220" width="180" height="280" rx="90" ry="90" fill="white"/>
+    
+    <!-- Mic grille lines -->
+    <line x1="-50" y1="-140" x2="50" y2="-140" stroke="#6366F1" stroke-width="12" stroke-linecap="round" opacity="0.3"/>
+    <line x1="-50" y1="-100" x2="50" y2="-100" stroke="#6366F1" stroke-width="12" stroke-linecap="round" opacity="0.3"/>
+    <line x1="-50" y1="-60" x2="50" y2="-60" stroke="#6366F1" stroke-width="12" stroke-linecap="round" opacity="0.3"/>
+    
+    <!-- Mic stand arc -->
+    <path d="M -120 40 Q -120 160 0 160 Q 120 160 120 40" 
+          stroke="white" stroke-width="36" stroke-linecap="round" fill="none"/>
+    
+    <!-- Mic stand vertical -->
+    <line x1="0" y1="160" x2="0" y2="260" stroke="white" stroke-width="36" stroke-linecap="round"/>
+    
+    <!-- Mic base -->
+    <line x1="-70" y1="260" x2="70" y2="260" stroke="white" stroke-width="36" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Sound waves (right side) -->
+  <g transform="translate(512, 400)" filter="url(#glow)">
+    <path d="M 180 -80 Q 230 0 180 80" stroke="white" stroke-width="24" stroke-linecap="round" fill="none" opacity="0.9"/>
+    <path d="M 240 -130 Q 320 0 240 130" stroke="white" stroke-width="24" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <path d="M 300 -180 Q 400 0 300 180" stroke="white" stroke-width="24" stroke-linecap="round" fill="none" opacity="0.3"/>
+  </g>
+  
+  <!-- Sound waves (left side, mirrored) -->
+  <g transform="translate(512, 400) scale(-1, 1)" filter="url(#glow)">
+    <path d="M 180 -80 Q 230 0 180 80" stroke="white" stroke-width="24" stroke-linecap="round" fill="none" opacity="0.9"/>
+    <path d="M 240 -130 Q 320 0 240 130" stroke="white" stroke-width="24" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <path d="M 300 -180 Q 400 0 300 180" stroke="white" stroke-width="24" stroke-linecap="round" fill="none" opacity="0.3"/>
+  </g>
+</svg>
