@@ -97,6 +97,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
         geminiClient = GeminiClient(apiKey: settings.apiKey, model: settings.model)
     }
 
+    private var hotkeyStartSucceeded = false
+
     private func setupHotkeys() {
         hotkeyManager = MacOSHotkeyManager()
 
@@ -112,10 +114,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
             self?.toggleLongTalk()
         }
 
-        if !hotkeyManager.start() {
-            Task { @MainActor in
-                self.appState.state = .error(.accessibilityPermissionDenied)
-            }
+        if hotkeyManager.start() {
+            hotkeyStartSucceeded = true
+            logger.info("Hotkey event tap created successfully")
+        } else {
+            hotkeyStartSucceeded = false
+            logger.error("Hotkey event tap FAILED — will prompt for Accessibility permission")
         }
     }
 
@@ -131,9 +135,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 }
             }
 
-            // Check accessibility permission
-            if !MacOSHotkeyManager.hasAccessibilityPermission() {
+            // Only prompt for Accessibility if the event tap actually failed.
+            // Don't rely on AXIsProcessTrusted() alone — after Xcode rebuilds,
+            // the code signature changes and macOS reports untrusted even though
+            // the event tap works fine.
+            if !hotkeyStartSucceeded {
+                logger.warning("Event tap failed — prompting for Accessibility permission")
                 MacOSHotkeyManager.requestAccessibilityPermission()
+                await MainActor.run {
+                    appState.state = .error(.accessibilityPermissionDenied)
+                }
             }
 
             // Check API key — if missing, open settings to prompt entry
