@@ -42,6 +42,11 @@ Thumbs.db
 *.env
 .env.*
 secrets.json
+*.dat
+*.key
+*.pem
+*.credential*
+*api_key*
 
 # XcodeGen
 # Keep project.yml but ignore generated project
