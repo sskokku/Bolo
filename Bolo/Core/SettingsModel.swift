@@ -118,11 +118,23 @@ class AppSettings: ObservableObject {
 // MARK: - Keychain Helper
 
 /// Secure storage for sensitive values like API keys.
+///
+/// **Primary**: macOS Keychain (most secure, but access is tied to the
+/// code signing identity — ad-hoc "Sign to Run Locally" creates a new
+/// identity on every build, making previously saved items inaccessible).
+///
+/// **Fallback**: A file in `~/Library/Application Support/Bolo/` with
+/// restricted file permissions (owner-only read/write). This survives
+/// Xcode rebuilds during development. In production with proper code
+/// signing, the Keychain will work consistently.
 enum KeychainHelper {
 
     private static let service = "com.bolo.app"
 
     static func save(_ value: String, for key: String) {
+        // Always save to the fallback file (survives code signing changes)
+        FallbackStore.save(value, for: key)
+
         guard let data = value.data(using: .utf8) else { return }
 
         // Delete existing item first
@@ -146,6 +158,7 @@ enum KeychainHelper {
     }
 
     static func load(_ key: String) -> String? {
+        // Try Keychain first (most secure)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -157,19 +170,81 @@ enum KeychainHelper {
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
-        guard status == errSecSuccess, let data = result as? Data else {
-            return nil
+        if status == errSecSuccess, let data = result as? Data, let value = String(data: data, encoding: .utf8), !value.isEmpty {
+            return value
         }
 
-        return String(data: data, encoding: .utf8)
+        // Keychain failed (likely code signing change) — try fallback file
+        return FallbackStore.load(key)
     }
 
     static func delete(_ key: String) {
+        FallbackStore.delete(key)
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key
         ]
         SecItemDelete(query as CFDictionary)
+    }
+}
+
+// MARK: - Fallback File Store
+
+/// Stores sensitive values in a file within Application Support
+/// with owner-only (0600) file permissions. Used as a fallback when
+/// the Keychain is inaccessible due to code signing identity changes
+/// during development.
+private enum FallbackStore {
+
+    private static var storeURL: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return appSupport.appendingPathComponent("Bolo", isDirectory: true)
+    }
+
+    private static func fileURL(for key: String) -> URL {
+        storeURL.appendingPathComponent(".\(key).dat")
+    }
+
+    static func save(_ value: String, for key: String) {
+        let fm = FileManager.default
+        let dir = storeURL
+
+        // Create directory if needed with restricted permissions
+        if !fm.fileExists(atPath: dir.path) {
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true, attributes: [
+                .posixPermissions: 0o700
+            ])
+        }
+
+        let url = fileURL(for: key)
+
+        if value.isEmpty {
+            try? fm.removeItem(at: url)
+            return
+        }
+
+        // Simple obfuscation (base64) — not encryption, just prevents
+        // casual viewing. Real security comes from file permissions and
+        // the Keychain in production builds.
+        guard let data = value.data(using: .utf8) else { return }
+        let encoded = data.base64EncodedData()
+
+        fm.createFile(atPath: url.path, contents: encoded, attributes: [
+            .posixPermissions: 0o600  // Owner read/write only
+        ])
+    }
+
+    static func load(_ key: String) -> String? {
+        let url = fileURL(for: key)
+        guard let encoded = FileManager.default.contents(atPath: url.path) else { return nil }
+        guard let data = Data(base64Encoded: encoded) else { return nil }
+        let value = String(data: data, encoding: .utf8)
+        return (value?.isEmpty == false) ? value : nil
+    }
+
+    static func delete(_ key: String) {
+        try? FileManager.default.removeItem(at: fileURL(for: key))
     }
 }
