@@ -12,6 +12,20 @@ struct OnboardingView: View {
     @State private var currentStep = 0
     @Environment(\.dismiss) private var dismiss
 
+    // Permission state tracked as reactive @State so the view re-renders
+    // when the user grants/denies in the system dialog.
+    @State private var micGranted: Bool = MacOSAudioCapture.hasPermission
+    @State private var micRequested: Bool = false   // true once we've shown the dialog
+    @State private var a11yGranted: Bool = MacOSHotkeyManager.hasAccessibilityPermission()
+
+    // True when the current step allows advancing
+    private var canAdvance: Bool {
+        switch currentStep {
+        case 1: return micGranted          // must grant mic before moving on
+        default: return true
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Step content
@@ -55,6 +69,7 @@ struct OnboardingView: View {
                         currentStep += 1
                     }
                     .keyboardShortcut(.defaultAction)
+                    .disabled(!canAdvance)
                 } else {
                     Button("Get Started") {
                         settings.hasCompletedOnboarding = true
@@ -66,6 +81,13 @@ struct OnboardingView: View {
             .padding()
         }
         .frame(width: 500, height: 400)
+        // Poll accessibility permission while on that step (it requires
+        // the user to toggle a switch in System Settings, so we poll).
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
+            if currentStep == 2 {
+                a11yGranted = MacOSHotkeyManager.hasAccessibilityPermission()
+            }
+        }
     }
 
     // MARK: - Steps
@@ -93,9 +115,10 @@ struct OnboardingView: View {
 
     private var microphoneStep: some View {
         VStack(spacing: 20) {
-            Image(systemName: "mic.badge.plus")
+            Image(systemName: micGranted ? "mic.fill" : "mic.badge.plus")
                 .font(.system(size: 50))
-                .foregroundColor(.accentColor)
+                .foregroundColor(micGranted ? .green : .accentColor)
+                .animation(.easeInOut, value: micGranted)
 
             Text("Microphone Access")
                 .font(.title2)
@@ -105,19 +128,48 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
 
-            if MacOSAudioCapture.hasPermission {
+            if micGranted {
                 Label("Microphone access granted", systemImage: "checkmark.circle.fill")
                     .foregroundColor(.green)
+            } else if micRequested {
+                // Dialog was shown but user denied — give them a path to fix it
+                VStack(spacing: 8) {
+                    Label("Microphone access denied", systemImage: "xmark.circle.fill")
+                        .foregroundColor(.red)
+                    Text("Open System Settings → Privacy & Security → Microphone and enable Bolo.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Open System Settings") {
+                        NSWorkspace.shared.open(
+                            URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!
+                        )
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
             } else {
+                // Not yet requested — show a prompt button (system dialog fires on tap)
                 Button("Grant Microphone Access") {
                     Task {
-                        _ = await MacOSAudioCapture.requestPermission()
+                        micRequested = true
+                        let granted = await MacOSAudioCapture.requestPermission()
+                        micGranted = granted
                     }
                 }
                 .buttonStyle(.borderedProminent)
             }
         }
         .padding()
+        // Auto-trigger the system permission dialog as soon as the step appears.
+        // This matches the behaviour of iOS apps and avoids an extra button tap.
+        .onAppear {
+            guard !MacOSAudioCapture.hasPermission, !micRequested else { return }
+            Task {
+                micRequested = true
+                let granted = await MacOSAudioCapture.requestPermission()
+                micGranted = granted
+            }
+        }
     }
 
     private var accessibilityStep: some View {
@@ -134,7 +186,7 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
 
-            if MacOSHotkeyManager.hasAccessibilityPermission() {
+            if a11yGranted {
                 Label("Accessibility access granted", systemImage: "checkmark.circle.fill")
                     .foregroundColor(.green)
             } else {

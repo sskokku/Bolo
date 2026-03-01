@@ -50,10 +50,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupComponents()
-        checkPermissions()
 
-        // Show onboarding on first launch
-        if !settings.hasCompletedOnboarding {
+        if settings.hasCompletedOnboarding {
+            // Returning user: verify permissions are still granted
+            // (user may have revoked them in System Settings since last launch).
+            checkPermissions()
+        } else {
+            // First launch: onboarding walks the user through each permission
+            // step explicitly — don't race it with a background request here.
             showOnboarding()
         }
     }
