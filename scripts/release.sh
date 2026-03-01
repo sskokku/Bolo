@@ -140,12 +140,9 @@ APP_PATH="$EXPORT_PATH/Bolo.app"
 [[ -d "$APP_PATH" ]] || die "Export failed — Bolo.app not found in $EXPORT_PATH"
 success "Exported → $APP_PATH"
 
-# ── Step 6: Rename for versioned dist ─────────────────────────────────────────
-
-VERSIONED_APP="$DIST_DIR/Bolo-$VERSION.app"
-cp -R "$APP_PATH" "$VERSIONED_APP"
-
-# ── Step 7: Notarize ──────────────────────────────────────────────────────────
+# ── Step 6: Notarize ──────────────────────────────────────────────────────────
+# Note: always notarize/staple the plain Bolo.app — the .app name must stay
+# "Bolo.app" so macOS registers it correctly in TCC (Privacy permissions).
 
 ZIP_PATH="$DIST_DIR/Bolo-$VERSION.zip"
 
@@ -153,7 +150,7 @@ if [[ $SKIP_NOTARIZE == true ]]; then
     warn "Skipping notarization (--skip-notarize flag set)"
 else
     info "Zipping for notarization…"
-    ditto -c -k --sequesterRsrc --keepParent "$VERSIONED_APP" "$ZIP_PATH"
+    ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_PATH"
     success "Zipped → $ZIP_PATH"
 
     info "Submitting to Apple Notarization (this takes 1–5 min)…"
@@ -171,17 +168,19 @@ else
     fi
 
     info "Stapling notarization ticket to Bolo.app…"
-    xcrun stapler staple "$VERSIONED_APP"
+    xcrun stapler staple "$APP_PATH"
     success "Ticket stapled"
 
     # Verify Gatekeeper will accept the app
     info "Verifying Gatekeeper acceptance…"
-    spctl --assess --type exec --verbose "$VERSIONED_APP" \
+    spctl --assess --type exec --verbose "$APP_PATH" \
         && success "Gatekeeper: accepted" \
         || warn "Gatekeeper check returned non-zero — review output above"
 fi
 
-# ── Step 8: Create DMG ────────────────────────────────────────────────────────
+# ── Step 7: Create DMG ────────────────────────────────────────────────────────
+# The app inside the DMG is always "Bolo.app" — the version is in the DMG
+# filename and encoded in CFBundleShortVersionString inside the bundle.
 
 DMG_PATH="$DIST_DIR/Bolo-$VERSION.dmg"
 DMG_STAGING="$DIST_DIR/dmg_staging"
@@ -189,7 +188,7 @@ DMG_STAGING="$DIST_DIR/dmg_staging"
 info "Creating DMG…"
 rm -rf "$DMG_STAGING"
 mkdir -p "$DMG_STAGING"
-cp -R "$VERSIONED_APP" "$DMG_STAGING/"
+cp -R "$APP_PATH" "$DMG_STAGING/Bolo.app"
 
 # Symlink to /Applications so the DMG has a drag-install arrow
 ln -s /Applications "$DMG_STAGING/Applications"
@@ -216,10 +215,10 @@ echo -e "${GREEN}  Bolo $VERSION (build $BUILD) — Release Ready!${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════${NC}"
 echo ""
 echo "  📦 DMG  : $DMG_PATH"
-echo "  🖥  App  : $VERSIONED_APP"
+echo "  🖥  App  : $APP_PATH  (named Bolo.app inside DMG)"
 echo ""
 echo "  Next steps:"
-echo "    1. Test $VERSIONED_APP on a clean Mac"
+echo "    1. Open $DMG_PATH and drag Bolo.app to /Applications"
 echo "    2. git tag v$VERSION && git push origin v$VERSION"
 echo "    3. Upload $DMG_PATH to GitHub Releases"
 echo "       (the GitHub Actions workflow does this automatically on tag push)"
