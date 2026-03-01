@@ -50,3 +50,5 @@ targets:
           PROVISIONING_PROFILE_SPECIFIER: ""
     entitlements:
       path: Bolo/Bolo.entitlements
+      properties:
+        com.apple.security.device.audio-input: true

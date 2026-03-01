@@ -23,15 +23,13 @@
 #   2. Runs xcodegen to regenerate Bolo.xcodeproj
 #   3. Archives Bolo.app with xcodebuild
 #   4. Exports a Developer-ID-signed .app via ExportOptions.plist
-#   5. Creates Bolo-<version>.zip (required format for notarytool)
-#   6. Submits to Apple Notarization and waits for approval
-#   7. Staples the notarization ticket to Bolo.app
-#   8. Packages into a drag-install Bolo-<version>.dmg
-#   9. Optionally creates a GitHub release and uploads the DMG
+#   5. Submits to Apple Notarization and waits for approval
+#   6. Staples the notarization ticket to Bolo.app
+#   7. Packages into a drag-install Bolo-<version>.dmg
 #
 # OUTPUT:
 #   dist/
-#     Bolo-<version>.app        (signed + notarized)
+#     export/Bolo.app           (signed + notarized)
 #     Bolo-<version>.zip        (intermediate, safe to delete)
 #     Bolo-<version>.dmg        (ready to distribute)
 #
@@ -207,7 +205,7 @@ rm -rf "$DMG_STAGING"
 
 success "DMG created → $DMG_PATH"
 
-# ── Step 9: Summary ───────────────────────────────────────────────────────────
+# ── Step 8: Summary ───────────────────────────────────────────────────────────
 
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════════${NC}"
