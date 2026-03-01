@@ -32,7 +32,6 @@ targets:
           - "**/Info.plist"
     settings:
       base:
-        CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: KJ47YGNM8Z
         PRODUCT_BUNDLE_IDENTIFIER: com.bolo.app
         CODE_SIGN_ENTITLEMENTS: Bolo/Bolo.entitlements
@@ -42,10 +41,12 @@ targets:
         INFOPLIST_FILE: Bolo/Info.plist
       configs:
         Debug:
+          CODE_SIGN_STYLE: Automatic
           CODE_SIGN_IDENTITY: "Apple Development"
         Release:
-          # Direct distribution via notarization (Developer ID)
-          # Change to "Apple Distribution" only if submitting to Mac App Store
-          CODE_SIGN_IDENTITY: "Developer ID Application"
+          # Manual signing required for Developer ID (direct distribution + notarization)
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: "Developer ID Application: Sashidhar Kokku (KJ47YGNM8Z)"
+          PROVISIONING_PROFILE_SPECIFIER: ""
     entitlements:
       path: Bolo/Bolo.entitlements

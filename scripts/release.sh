@@ -121,7 +121,6 @@ xcodebuild archive \
     -configuration "$CONFIGURATION" \
     -archivePath "$ARCHIVE_PATH" \
     -destination "generic/platform=macOS" \
-    CODE_SIGN_STYLE=Automatic \
     DEVELOPMENT_TEAM="$TEAM_ID" \
     | grep -E "(Build |error:|warning:|✓)" || true
 
