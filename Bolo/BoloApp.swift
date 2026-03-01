@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import AVFoundation
 import os.log
 
 /// Unified logger for Bolo — messages appear in Console.app under subsystem "com.bolo.app".
@@ -141,14 +142,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
     private func checkPermissions() {
         Task {
-            // Check microphone permission
-            if !MacOSAudioCapture.hasPermission {
+            // Check microphone permission.
+            // Three possible states for returning users:
+            //   .authorized    → all good, do nothing
+            //   .notDetermined → was never asked or was reset; request now
+            //   .denied        → user revoked in System Settings; show alert
+            let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
+            if micStatus == .notDetermined {
                 let granted = await MacOSAudioCapture.requestPermission()
                 if !granted {
                     ErrorLogger.shared.logError(category: .audio, message: "Microphone permission denied by user")
                     await MainActor.run {
                         appState.state = .error(.microphonePermissionDenied)
+                        showMicrophonePermissionAlert()
                     }
+                }
+            } else if micStatus == .denied {
+                ErrorLogger.shared.logError(category: .audio, message: "Microphone permission previously denied — prompting user to fix")
+                await MainActor.run {
+                    appState.state = .error(.microphonePermissionDenied)
+                    showMicrophonePermissionAlert()
                 }
             }
 
@@ -179,6 +192,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                     menuBarController.openSettingsWindow()
                 }
             }
+        }
+    }
+
+    /// Shows a prominent NSAlert when mic permission is missing on a returning launch.
+    /// Unlike the onboarding flow, returning users have no UI to guide them —
+    /// so we surface an alert with a direct "Open System Settings" button.
+    @MainActor
+    private func showMicrophonePermissionAlert() {
+        let alert = NSAlert()
+        alert.messageText = "Microphone Access Required"
+        alert.informativeText = "Bolo needs microphone access to transcribe your voice.\n\nOpen System Settings → Privacy & Security → Microphone and enable Bolo."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Open System Settings")
+        alert.addButton(withTitle: "Later")
+
+        NSApp.activate(ignoringOtherApps: true)
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            NSWorkspace.shared.open(
+                URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!
+            )
         }
     }
 
