@@ -48,6 +48,9 @@ secrets.json
 *.credential*
 *api_key*
 
+# Build artifacts / distribution
+dist/
+
 # XcodeGen
 # Keep project.yml but ignore generated project
 # Bolo.xcodeproj is generated and can be regenerated
