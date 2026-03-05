@@ -55,13 +55,17 @@ struct HistoryView: View {
 
             Divider()
 
-            // Footer
-            HStack {
+            // Stats footer
+            HStack(spacing: 12) {
                 Text("\(entries.count) entries")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Text("·")
+                Text("\(historyManager.getTotalWordCount().formatted()) words")
+                Text("·")
+                Text(formatTotalDuration(historyManager.getTotalDuration()))
                 Spacer()
             }
+            .font(.caption)
+            .foregroundColor(.secondary)
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
@@ -82,6 +86,19 @@ struct HistoryView: View {
             historyManager.deleteEntry(id: entries[index].id)
         }
         refreshEntries(query: searchText)
+    }
+
+    private func formatTotalDuration(_ duration: TimeInterval) -> String {
+        let totalSeconds = Int(duration)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        if hours > 0 {
+            return "\(hours)h \(minutes)m recorded"
+        } else if minutes > 0 {
+            return "\(minutes)m recorded"
+        } else {
+            return "\(totalSeconds)s recorded"
+        }
     }
 }
 
@@ -124,7 +141,13 @@ struct HistoryEntryRow: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                // Duration
+                // Word count & duration
+                if entry.wordCount > 0 {
+                    Text("\(entry.wordCount) words")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
                 if entry.duration > 0 {
                     Text(formatDuration(entry.duration))
                         .font(.caption)

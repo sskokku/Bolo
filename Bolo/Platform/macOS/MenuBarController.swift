@@ -12,6 +12,7 @@ class MenuBarController: ObservableObject {
 
     private var statusItem: NSStatusItem!
     private let appState: AppState
+    private let historyManager: HistoryManager
     private var settingsWindow: NSWindow?
     private var dictionaryWindow: NSWindow?
     private var historyWindow: NSWindow?
@@ -20,8 +21,9 @@ class MenuBarController: ObservableObject {
     private var hostingView: NSHostingView<MenuBarIndicatorView>?
     private var isLiveIndicatorActive = false
 
-    init(appState: AppState) {
+    init(appState: AppState, historyManager: HistoryManager) {
         self.appState = appState
+        self.historyManager = historyManager
         setupStatusItem()
     }
 
@@ -46,6 +48,14 @@ class MenuBarController: ObservableObject {
         statusMenuItem.isEnabled = false
         statusMenuItem.tag = 100 // Tag for updating status text
         menu.addItem(statusMenuItem)
+
+        // Daily word count
+        let todayWords = historyManager.getTodayWordCount()
+        let statsTitle = "\(todayWords.formatted()) words today"
+        let statsItem = NSMenuItem(title: statsTitle, action: nil, keyEquivalent: "")
+        statsItem.isEnabled = false
+        statsItem.tag = 101 // Tag for updating stats
+        menu.addItem(statsItem)
 
         menu.addItem(NSMenuItem.separator())
 

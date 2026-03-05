@@ -35,8 +35,8 @@ class HistoryManager {
     /// Add a transcription to the history.
     func addEntry(_ entry: HistoryEntry) {
         let sql = """
-        INSERT INTO history (id, text, mode, app_name, timestamp, duration)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO history (id, text, mode, app_name, timestamp, duration, word_count)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """
 
         var statement: OpaquePointer?
@@ -49,6 +49,7 @@ class HistoryManager {
         bindOptionalText(statement, 4, entry.appName)
         sqlite3_bind_double(statement, 5, entry.timestamp.timeIntervalSince1970)
         sqlite3_bind_double(statement, 6, entry.duration)
+        sqlite3_bind_int(statement, 7, Int32(entry.wordCount))
 
         sqlite3_step(statement)
     }
@@ -123,6 +124,58 @@ class HistoryManager {
         sqlite3_step(statement)
     }
 
+    // MARK: - Statistics
+
+    /// Total word count across all history entries.
+    func getTotalWordCount() -> Int {
+        let sql = "SELECT COALESCE(SUM(word_count), 0) FROM history"
+
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return 0 }
+        defer { sqlite3_finalize(statement) }
+
+        guard sqlite3_step(statement) == SQLITE_ROW else { return 0 }
+        return Int(sqlite3_column_int64(statement, 0))
+    }
+
+    /// Word count for entries created today (local time).
+    func getTodayWordCount() -> Int {
+        let startOfToday = Calendar.current.startOfDay(for: Date())
+        let sql = "SELECT COALESCE(SUM(word_count), 0) FROM history WHERE timestamp >= ?"
+
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return 0 }
+        defer { sqlite3_finalize(statement) }
+
+        sqlite3_bind_double(statement, 1, startOfToday.timeIntervalSince1970)
+        guard sqlite3_step(statement) == SQLITE_ROW else { return 0 }
+        return Int(sqlite3_column_int64(statement, 0))
+    }
+
+    /// Total recording duration across all history entries (in seconds).
+    func getTotalDuration() -> TimeInterval {
+        let sql = "SELECT COALESCE(SUM(duration), 0) FROM history"
+
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return 0 }
+        defer { sqlite3_finalize(statement) }
+
+        guard sqlite3_step(statement) == SQLITE_ROW else { return 0 }
+        return sqlite3_column_double(statement, 0)
+    }
+
+    /// Total number of history entries.
+    func getEntryCount() -> Int {
+        let sql = "SELECT COUNT(*) FROM history"
+
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return 0 }
+        defer { sqlite3_finalize(statement) }
+
+        guard sqlite3_step(statement) == SQLITE_ROW else { return 0 }
+        return Int(sqlite3_column_int64(statement, 0))
+    }
+
     // MARK: - Private: Database
 
     private func openDatabase() {
@@ -146,6 +199,14 @@ class HistoryManager {
         """
 
         sqlite3_exec(db, sql, nil, nil, nil)
+        migrateSchema()
+    }
+
+    /// Add columns introduced after the initial schema.
+    /// SQLite's ALTER TABLE ADD COLUMN is a no-op if the column already exists
+    /// (it returns an error we silently ignore).
+    private func migrateSchema() {
+        sqlite3_exec(db, "ALTER TABLE history ADD COLUMN word_count INTEGER NOT NULL DEFAULT 0", nil, nil, nil)
     }
 
     private func parseRow(_ statement: OpaquePointer?) -> HistoryEntry? {
@@ -163,7 +224,8 @@ class HistoryManager {
             mode: String(cString: modePtr),
             appName: appName,
             timestamp: Date(timeIntervalSince1970: sqlite3_column_double(statement, 4)),
-            duration: sqlite3_column_double(statement, 5)
+            duration: sqlite3_column_double(statement, 5),
+            wordCount: Int(sqlite3_column_int(statement, 6))
         )
     }
 

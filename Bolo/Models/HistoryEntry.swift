@@ -8,6 +8,7 @@ struct HistoryEntry: Identifiable, Codable, Equatable {
     let appName: String?
     let timestamp: Date
     let duration: TimeInterval
+    let wordCount: Int
 
     /// Create a new history entry.
     init(
@@ -22,6 +23,7 @@ struct HistoryEntry: Identifiable, Codable, Equatable {
         self.appName = appName
         self.timestamp = Date()
         self.duration = duration
+        self.wordCount = text.split { $0.isWhitespace || $0.isNewline }.count
     }
 
     /// Full initializer for restoring from database.
@@ -31,7 +33,8 @@ struct HistoryEntry: Identifiable, Codable, Equatable {
         mode: String,
         appName: String?,
         timestamp: Date,
-        duration: TimeInterval
+        duration: TimeInterval,
+        wordCount: Int
     ) {
         self.id = id
         self.text = text
@@ -39,6 +42,7 @@ struct HistoryEntry: Identifiable, Codable, Equatable {
         self.appName = appName
         self.timestamp = timestamp
         self.duration = duration
+        self.wordCount = wordCount
     }
 }
 
