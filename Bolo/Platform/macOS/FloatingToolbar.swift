@@ -293,6 +293,8 @@ struct ErrorPillView: View {
         case .microphonePermissionDenied: return "Microphone access required"
         case .accessibilityPermissionDenied: return "Accessibility access required"
         case .apiKeyMissing: return "API key not configured"
+        case .authNotConfigured: return "Authentication not configured"
+        case .tokenExpired: return "Sign-in expired"
         case .apiError(let msg): return "Error: \(msg.prefix(30))"
         case .networkError: return "Network error"
         case .audioTooShort: return "Recording too short"

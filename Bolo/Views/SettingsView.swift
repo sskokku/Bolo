@@ -8,6 +8,8 @@ struct SettingsView: View {
     @State private var isTestingAPI = false
     @State private var apiTestResult: String?
     @State private var apiTestSuccess = false
+    @State private var isSigningIn = false
+    @State private var signInError: String?
 
     var body: some View {
         TabView {
@@ -36,7 +38,7 @@ struct SettingsView: View {
                     Label("Logging", systemImage: "doc.text")
                 }
         }
-        .frame(width: 480, height: 380)
+        .frame(width: 480, height: 460)
     }
 
     // MARK: - General Tab
@@ -120,19 +122,27 @@ struct SettingsView: View {
 
     private var apiTab: some View {
         Form {
-            Section("Gemini API Configuration") {
-                SecureField("API Key", text: $settings.apiKey)
-                    .textFieldStyle(.roundedBorder)
-
-                HStack {
-                    Text("Get your free API key:")
-                    Link("aistudio.google.com",
-                         destination: URL(string: "https://aistudio.google.com/app/apikey")!)
-                        .foregroundColor(.accentColor)
+            Section("Authentication Method") {
+                Picker("Provider", selection: $settings.authMode) {
+                    ForEach(AuthMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
                 }
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .pickerStyle(.segmented)
+                .onChange(of: settings.authMode) { _ in
+                    // Clear test result when switching modes
+                    apiTestResult = nil
+                }
+            }
 
+            if settings.authMode == .geminiDirect {
+                geminiDirectSection
+            } else {
+                vertexAIConfigSection
+                vertexAISignInSection
+            }
+
+            Section("Model") {
                 Picker("Model", selection: $settings.model) {
                     Text("Gemini 2.5 Flash (Recommended)").tag("gemini-2.5-flash")
                     Text("Gemini 2.5 Pro").tag("gemini-2.5-pro")
@@ -142,7 +152,7 @@ struct SettingsView: View {
                     Button(isTestingAPI ? "Testing..." : "Test Connection") {
                         testAPIConnection()
                     }
-                    .disabled(settings.apiKey.isEmpty || isTestingAPI)
+                    .disabled(!settings.hasValidAuth || isTestingAPI)
 
                     if let result = apiTestResult {
                         Label(result, systemImage: apiTestSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
@@ -153,6 +163,90 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    // MARK: - Gemini Direct Section
+
+    private var geminiDirectSection: some View {
+        Section("Gemini API Key") {
+            SecureField("API Key", text: $settings.apiKey)
+                .textFieldStyle(.roundedBorder)
+
+            HStack {
+                Text("Get your free API key:")
+                Link("aistudio.google.com",
+                     destination: URL(string: "https://aistudio.google.com/app/apikey")!)
+                    .foregroundColor(.accentColor)
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+    }
+
+    // MARK: - Vertex AI Sections
+
+    private var vertexAIConfigSection: some View {
+        Section("Vertex AI Configuration") {
+            TextField("GCP Project ID", text: $settings.vertexProjectID)
+                .textFieldStyle(.roundedBorder)
+
+            Picker("Region", selection: $settings.vertexRegion) {
+                Text("us-central1").tag("us-central1")
+                Text("us-east1").tag("us-east1")
+                Text("us-west1").tag("us-west1")
+                Text("europe-west1").tag("europe-west1")
+                Text("asia-northeast1").tag("asia-northeast1")
+            }
+
+            TextField("OAuth Client ID", text: $settings.vertexOAuthClientID)
+                .textFieldStyle(.roundedBorder)
+
+            Text("Create a Desktop OAuth Client ID in your GCP Console under APIs & Services → Credentials.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var vertexAISignInSection: some View {
+        Section("Google Account") {
+            if OAuthTokenManager.shared.isSignedIn {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Label("Signed in", systemImage: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        if let email = OAuthTokenManager.shared.userEmail {
+                            Text(email)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Spacer()
+                    Button("Sign Out") {
+                        OAuthTokenManager.shared.clearTokens()
+                        signInError = nil
+                        apiTestResult = nil
+                    }
+                    .foregroundColor(.red)
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    Button(isSigningIn ? "Signing in..." : "Sign in with Google") {
+                        performSignIn()
+                    }
+                    .disabled(isSigningIn || settings.vertexOAuthClientID.isEmpty)
+
+                    if let error = signInError {
+                        Label(error, systemImage: "xmark.circle.fill")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+
+                    Text("Opens your browser for Google Workspace sign-in.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
     }
 
     // MARK: - Recording Tab
@@ -270,11 +364,21 @@ struct SettingsView: View {
         apiTestResult = nil
 
         Task {
-            let client = GeminiClient(apiKey: settings.apiKey, model: settings.model)
+            let client: any TranscriptionProvider
+            switch settings.authMode {
+            case .geminiDirect:
+                client = GeminiClient(apiKey: settings.apiKey, model: settings.model)
+            case .vertexAI:
+                client = VertexAIClient(
+                    projectID: settings.vertexProjectID,
+                    region: settings.vertexRegion,
+                    model: settings.model
+                )
+            }
 
             do {
-                // Send a simple text-only request to test the API key
-                let result = try await client.processCommand(
+                // Send a simple text-only request to test the connection
+                let _ = try await client.processCommand(
                     selectedText: "Hello world",
                     command: "repeat this exactly"
                 )
@@ -289,6 +393,33 @@ struct SettingsView: View {
                     apiTestSuccess = false
                     apiTestResult = error.localizedDescription
                     isTestingAPI = false
+                }
+            }
+        }
+    }
+
+    // MARK: - OAuth Sign-In
+
+    private func performSignIn() {
+        isSigningIn = true
+        signInError = nil
+
+        Task {
+            do {
+                let handler = OAuthSignInHandler(clientID: settings.vertexOAuthClientID)
+                let tokens = try await handler.signIn()
+                OAuthTokenManager.shared.storeTokens(tokens)
+
+                await MainActor.run {
+                    isSigningIn = false
+                    signInError = nil
+                    // Trigger settings change to refresh the transcription provider
+                    NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: nil)
+                }
+            } catch {
+                await MainActor.run {
+                    isSigningIn = false
+                    signInError = error.localizedDescription
                 }
             }
         }

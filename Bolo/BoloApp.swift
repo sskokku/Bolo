@@ -36,7 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
     private var hotkeyManager: MacOSHotkeyManager!
     private var audioCapture: MacOSAudioCapture!
     private var textInsertion: MacOSTextInsertion!
-    private var geminiClient: GeminiClient?
+    private var transcriptionProvider: (any TranscriptionProvider)?
     private var dictionaryManager: DictionaryManager!
     private var historyManager: HistoryManager!
     private var recordingTimer: Timer?
@@ -78,14 +78,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
         textInsertion = MacOSTextInsertion()
 
         // Initialize UI
-        menuBarController = MenuBarController(appState: appState)
+        menuBarController = MenuBarController(appState: appState, historyManager: historyManager)
         floatingToolbar = FloatingToolbarController(appState: appState)
 
         // Apply initial indicator style (floating pill, menu bar, or both)
         applyIndicatorStyle(settings.indicatorStyle)
 
-        // Initialize Gemini client if API key exists
-        refreshGeminiClient()
+        // Initialize transcription provider based on auth mode
+        refreshTranscriptionProvider()
 
         // Setup hotkeys
         setupHotkeys()
@@ -99,12 +99,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
         )
     }
 
-    private func refreshGeminiClient() {
-        guard settings.hasValidAPIKey else {
-            geminiClient = nil
-            return
+    private func refreshTranscriptionProvider() {
+        switch settings.authMode {
+        case .geminiDirect:
+            guard !settings.apiKey.isEmpty else {
+                transcriptionProvider = nil
+                return
+            }
+            transcriptionProvider = GeminiClient(apiKey: settings.apiKey, model: settings.model)
+
+        case .vertexAI:
+            guard OAuthTokenManager.shared.isSignedIn,
+                  !settings.vertexProjectID.isEmpty else {
+                transcriptionProvider = nil
+                return
+            }
+            transcriptionProvider = VertexAIClient(
+                projectID: settings.vertexProjectID,
+                region: settings.vertexRegion,
+                model: settings.model
+            )
         }
-        geminiClient = GeminiClient(apiKey: settings.apiKey, model: settings.model)
     }
 
     private var hotkeyStartSucceeded = false
@@ -184,11 +199,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 }
             }
 
-            // Check API key — if missing, open settings to prompt entry
-            if !settings.hasValidAPIKey {
-                ErrorLogger.shared.logWarning(category: .api, message: "API key not configured — prompting user")
+            // Check authentication — if not configured, open settings to prompt setup
+            if !settings.hasValidAuth {
+                ErrorLogger.shared.logWarning(category: .api, message: "Authentication not configured — prompting user")
                 await MainActor.run {
-                    appState.state = .error(.apiKeyMissing)
+                    appState.state = .error(settings.authMode == .geminiDirect ? .apiKeyMissing : .authNotConfigured)
                     menuBarController.openSettingsWindow()
                 }
             }
@@ -296,9 +311,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                 return
             }
 
-            guard let client = geminiClient else {
-                ErrorLogger.shared.logError(category: .api, message: "No Gemini client — API key missing")
-                appState.state = .error(.apiKeyMissing)
+            guard let client = transcriptionProvider else {
+                ErrorLogger.shared.logError(category: .api, message: "No transcription provider — authentication not configured")
+                appState.state = .error(settings.authMode == .geminiDirect ? .apiKeyMissing : .authNotConfigured)
                 resetToIdleAfterDelay()
                 return
             }
@@ -333,7 +348,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
 
                     // The audio is the voice command
                     // First transcribe the command
-                    let command = try await client.transcribe(audio: wavData)
+                    let command = try await client.transcribe(audio: wavData, context: nil, dictionary: [])
 
                     // Then process the command on the selected text
                     resultText = try await client.processCommand(
@@ -425,6 +440,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
                     default:
                         appError = .apiError(error.localizedDescription)
                     }
+                } else if let vertexError = error as? VertexAIError {
+                    switch vertexError {
+                    case .notSignedIn:
+                        appError = .authNotConfigured
+                    case .tokenRefreshFailed:
+                        appError = .tokenExpired
+                    case .networkError:
+                        appError = .networkError
+                    case .accessDenied:
+                        appError = .apiError(vertexError.localizedDescription)
+                    case .apiError(let msg):
+                        appError = .apiError(msg)
+                    default:
+                        appError = .apiError(error.localizedDescription)
+                    }
                 } else {
                     appError = .apiError(error.localizedDescription)
                 }
@@ -487,15 +517,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
     // MARK: - Notifications
 
     @objc private func settingsDidChange() {
-        refreshGeminiClient()
+        refreshTranscriptionProvider()
 
-        // If the user just entered their API key, clear the apiKeyMissing error
+        // If the user just configured authentication, clear any auth error
         // so recording can proceed. Without this, the state stays stuck in .error
         // and startRecording() silently returns.
-        if settings.hasValidAPIKey, case .error(.apiKeyMissing) = appState.state {
-            logger.info("API key entered — resetting state from error to idle")
-            appState.state = .idle
-            menuBarController.updateIcon(for: appState.state)
+        if settings.hasValidAuth {
+            if case .error(.apiKeyMissing) = appState.state {
+                logger.info("API key entered — resetting state from error to idle")
+                appState.state = .idle
+                menuBarController.updateIcon(for: appState.state)
+            } else if case .error(.authNotConfigured) = appState.state {
+                logger.info("Vertex AI auth configured — resetting state from error to idle")
+                appState.state = .idle
+                menuBarController.updateIcon(for: appState.state)
+            } else if case .error(.tokenExpired) = appState.state {
+                logger.info("Re-authenticated — resetting state from error to idle")
+                appState.state = .idle
+                menuBarController.updateIcon(for: appState.state)
+            }
         }
 
         // Apply indicator style changes

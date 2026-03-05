@@ -30,6 +30,8 @@ enum AppError: Error, Equatable {
     case microphonePermissionDenied
     case accessibilityPermissionDenied
     case apiKeyMissing
+    case authNotConfigured
+    case tokenExpired
     case apiError(String)
     case networkError
     case audioTooShort
@@ -128,6 +130,10 @@ class AppState: ObservableObject {
             return "Accessibility access required"
         case .apiKeyMissing:
             return "API key not configured"
+        case .authNotConfigured:
+            return "Authentication not configured"
+        case .tokenExpired:
+            return "Sign-in expired — please re-authenticate"
         case .apiError(let message):
             return "API Error: \(message)"
         case .networkError:

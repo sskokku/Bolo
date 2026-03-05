@@ -210,26 +210,42 @@ struct OnboardingView: View {
                 .font(.system(size: 50))
                 .foregroundColor(.accentColor)
 
-            Text("Gemini API Key")
+            Text("API Configuration")
                 .font(.title2)
                 .fontWeight(.bold)
 
-            Text("Bolo uses Google Gemini to process your voice.\nA free API key is available.")
+            Text("Bolo uses Google Gemini to process your voice.\nChoose your authentication method.")
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
 
-            VStack(spacing: 8) {
-                SecureField("Paste your API key here", text: $settings.apiKey)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 300)
+            Picker("Provider", selection: $settings.authMode) {
+                ForEach(AuthMode.allCases) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 320)
 
-                Link("Get a free API key at aistudio.google.com",
-                     destination: URL(string: "https://aistudio.google.com/app/apikey")!)
-                    .font(.caption)
+            if settings.authMode == .geminiDirect {
+                VStack(spacing: 8) {
+                    SecureField("Paste your API key here", text: $settings.apiKey)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 300)
+
+                    Link("Get a free API key at aistudio.google.com",
+                         destination: URL(string: "https://aistudio.google.com/app/apikey")!)
+                        .font(.caption)
+                }
+            } else {
+                VStack(spacing: 8) {
+                    Text("Configure Vertex AI in Settings after onboarding.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
 
-            if settings.hasValidAPIKey {
-                Label("API key saved", systemImage: "checkmark.circle.fill")
+            if settings.hasValidAuth {
+                Label("Configuration saved", systemImage: "checkmark.circle.fill")
                     .foregroundColor(.green)
             }
         }

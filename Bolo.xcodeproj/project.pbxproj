@@ -31,6 +31,10 @@
 		E4EBA6114A915152B484B684 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC906FD27136AAE22AFCD171 /* SettingsModel.swift */; };
 		EDCEE448510AEF6C171969D6 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 589C5443017029E8A759E6D0 /* OnboardingView.swift */; };
 		F380F0940AA03BE760674C66 /* TextInsertion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12C3EF136E908A113369C5E0 /* TextInsertion.swift */; };
+		3AB45758853D2F3786B61D0A /* AuthMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B587F5F3E3F88591A6CD7F9 /* AuthMode.swift */; };
+		5BF527F72CEAE8F35096F2E6 /* OAuthTokenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4FE3407E84EAC315E64B76F /* OAuthTokenManager.swift */; };
+		E69B364BB8DEFF80671C5391 /* OAuthSignInHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A62D0EF9551431E51698EC /* OAuthSignInHandler.swift */; };
+		7B9139575E4DFE006E0FBE1D /* VertexAIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E1DBAF4CE7540C003D69CF /* VertexAIClient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -60,6 +64,10 @@
 		EB6F884BE5C1E2ECC8EC0B52 /* Bolo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bolo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED01A656896A5B17C7E5913F /* TranscriptionResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionResult.swift; sourceTree = "<group>"; };
 		FE88E61994944BD70BCE1C10 /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
+		4B587F5F3E3F88591A6CD7F9 /* AuthMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthMode.swift; sourceTree = "<group>"; };
+		A4FE3407E84EAC315E64B76F /* OAuthTokenManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthTokenManager.swift; sourceTree = "<group>"; };
+		97A62D0EF9551431E51698EC /* OAuthSignInHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthSignInHandler.swift; sourceTree = "<group>"; };
+		D6E1DBAF4CE7540C003D69CF /* VertexAIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VertexAIClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -99,6 +107,10 @@
 				711DC145B32EAA3F1A37A117 /* GeminiClient.swift */,
 				8C354676290F6F32A6574C8E /* HistoryManager.swift */,
 				CC906FD27136AAE22AFCD171 /* SettingsModel.swift */,
+				4B587F5F3E3F88591A6CD7F9 /* AuthMode.swift */,
+				A4FE3407E84EAC315E64B76F /* OAuthTokenManager.swift */,
+				97A62D0EF9551431E51698EC /* OAuthSignInHandler.swift */,
+				D6E1DBAF4CE7540C003D69CF /* VertexAIClient.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -252,6 +264,10 @@
 				4606189AC10186C22E178924 /* SettingsView.swift in Sources */,
 				F380F0940AA03BE760674C66 /* TextInsertion.swift in Sources */,
 				35AC36AE06FD592C86F8CA96 /* TranscriptionResult.swift in Sources */,
+				3AB45758853D2F3786B61D0A /* AuthMode.swift in Sources */,
+				5BF527F72CEAE8F35096F2E6 /* OAuthTokenManager.swift in Sources */,
+				E69B364BB8DEFF80671C5391 /* OAuthSignInHandler.swift in Sources */,
+				7B9139575E4DFE006E0FBE1D /* VertexAIClient.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

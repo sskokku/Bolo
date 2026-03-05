@@ -49,6 +49,10 @@ enum SettingsKey {
     static let launchAtLogin = "launch_at_login"
     static let maxLogFileSize = "max_log_file_size"
     static let enableLogging = "enable_logging"
+    static let authMode = "auth_mode"
+    static let vertexProjectID = "vertex_project_id"
+    static let vertexRegion = "vertex_region"
+    static let vertexOAuthClientID = "vertex_oauth_client_id"
 }
 
 // MARK: - Settings Defaults
@@ -67,6 +71,8 @@ enum SettingsDefaults {
     static let launchAtLogin = false
     static let maxLogFileSize = 5 // MB
     static let enableLogging = true
+    static let authMode: AuthMode = .geminiDirect
+    static let vertexRegion = "us-central1"
 }
 
 // MARK: - Settings
@@ -127,10 +133,41 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(enableLogging, forKey: SettingsKey.enableLogging) }
     }
 
+    @Published var authMode: AuthMode {
+        didSet { UserDefaults.standard.set(authMode.rawValue, forKey: SettingsKey.authMode) }
+    }
+
+    @Published var vertexProjectID: String {
+        didSet { UserDefaults.standard.set(vertexProjectID, forKey: SettingsKey.vertexProjectID) }
+    }
+
+    @Published var vertexRegion: String {
+        didSet { UserDefaults.standard.set(vertexRegion, forKey: SettingsKey.vertexRegion) }
+    }
+
+    @Published var vertexOAuthClientID: String {
+        didSet {
+            UserDefaults.standard.set(vertexOAuthClientID, forKey: SettingsKey.vertexOAuthClientID)
+            OAuthTokenManager.shared.clientID = vertexOAuthClientID
+        }
+    }
+
     // MARK: - Computed
 
     var hasValidAPIKey: Bool {
         !apiKey.isEmpty
+    }
+
+    /// Whether the active auth mode has valid credentials configured.
+    var hasValidAuth: Bool {
+        switch authMode {
+        case .geminiDirect:
+            return !apiKey.isEmpty
+        case .vertexAI:
+            return OAuthTokenManager.shared.isSignedIn
+                && !vertexProjectID.isEmpty
+                && !vertexOAuthClientID.isEmpty
+        }
     }
 
     // MARK: - Launch at Login
@@ -175,6 +212,12 @@ class AppSettings: ObservableObject {
         let storedLogSize = defaults.integer(forKey: SettingsKey.maxLogFileSize)
         self.maxLogFileSize = storedLogSize > 0 ? storedLogSize : SettingsDefaults.maxLogFileSize
         self.enableLogging = defaults.object(forKey: SettingsKey.enableLogging) as? Bool ?? SettingsDefaults.enableLogging
+        self.authMode = AuthMode(rawValue: defaults.string(forKey: SettingsKey.authMode) ?? "") ?? SettingsDefaults.authMode
+        self.vertexProjectID = defaults.string(forKey: SettingsKey.vertexProjectID) ?? ""
+        self.vertexRegion = defaults.string(forKey: SettingsKey.vertexRegion) ?? SettingsDefaults.vertexRegion
+        self.vertexOAuthClientID = defaults.string(forKey: SettingsKey.vertexOAuthClientID) ?? ""
+        // Sync OAuth client ID to token manager
+        OAuthTokenManager.shared.clientID = self.vertexOAuthClientID
     }
 }
 

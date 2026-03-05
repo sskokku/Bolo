@@ -208,6 +208,20 @@ struct GeminiClient: TranscriptionProvider {
     // MARK: - Private: Prompt Building
 
     private func buildDictationPrompt(context: String?, dictionary: [String]) -> String {
+        PromptBuilder.buildDictationPrompt(context: context, dictionary: dictionary)
+    }
+
+    private func buildCommandPrompt() -> String {
+        PromptBuilder.buildCommandPrompt()
+    }
+}
+
+// MARK: - Shared Prompt Builder
+
+/// Shared prompt templates used by both GeminiClient and VertexAIClient.
+enum PromptBuilder {
+
+    static func buildDictationPrompt(context: String?, dictionary: [String]) -> String {
         var prompt = """
         You are a dictation assistant. Your job is to transcribe speech into clean, polished text.
 
@@ -235,7 +249,7 @@ struct GeminiClient: TranscriptionProvider {
         return prompt
     }
 
-    private func buildCommandPrompt() -> String {
+    static func buildCommandPrompt() -> String {
         return """
         You are a text editing assistant. The user will provide selected text and a voice command.
 
