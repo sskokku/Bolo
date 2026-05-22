@@ -1,621 +1,67 @@
+//
+//  BoloApp.swift
+//  Bolo
+//
+
 import SwiftUI
 import AppKit
-import AVFoundation
-import os.log
+import ApplicationServices
+import SwiftData
 
-/// Unified logger for Bolo — messages appear in Console.app under subsystem "com.bolo.app".
-private let logger = Logger(subsystem: "com.bolo.app", category: "AppDelegate")
-
-/// Bolo (बोलो) - Voice Dictation App
-/// Main application entry point. Bolo runs as a menu bar app (LSUIElement)
-/// and provides system-wide voice-to-text dictation using Google Gemini.
 @main
 struct BoloApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @State private var dictation = DictationController.shared
+    @State private var stats = UsageStats.shared
 
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    private var menuBarSymbol: String {
+        if dictation.isRecording { return "waveform" }
+        #if DEBUG
+        return "ladybug.fill"
+        #else
+        return "quote.bubble.fill"
+        #endif
+    }
 
     var body: some Scene {
-        // Settings scene accessible via menu bar > Settings
+        MenuBarExtra {
+            MenuBarContent()
+                .environment(dictation)
+                .environment(stats)
+                .modelContainer(DictationController.shared.modelContainer)
+        } label: {
+            Image(systemName: menuBarSymbol)
+                .symbolRenderingMode(.monochrome)
+                .symbolEffect(.variableColor.iterative.reversing,
+                              options: .repeating,
+                              isActive: dictation.isRecording)
+        }
+        .menuBarExtraStyle(.window)
+
         Settings {
             SettingsView()
+                .environment(dictation)
+                .environment(stats)
+                .modelContainer(DictationController.shared.modelContainer)
         }
     }
 }
 
-// MARK: - App Delegate
-
-/// AppDelegate handles the menu bar lifecycle, hotkey registration,
-/// and coordinates between audio capture, Gemini API, and text insertion.
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate, AudioCaptureDelegate {
-
-    // MARK: - Properties
-
-    private var menuBarController: MenuBarController!
-    private var floatingToolbar: FloatingToolbarController!
-    private var hotkeyManager: MacOSHotkeyManager!
-    private var audioCapture: MacOSAudioCapture!
-    private var textInsertion: MacOSTextInsertion!
-    private var transcriptionProvider: (any TranscriptionProvider)?
-    private var dictionaryManager: DictionaryManager!
-    private var historyManager: HistoryManager!
-    private var recordingTimer: Timer?
-    private var onboardingWindow: NSWindow?
-    /// The app that was frontmost when recording started — we'll re-activate it for text insertion.
-    private var targetApp: NSRunningApplication?
-
-    let appState = AppState()
-    let settings = AppSettings.shared
-
-    // MARK: - Lifecycle
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    private let hotkey = HotkeyMonitor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        setupComponents()
-
-        if settings.hasCompletedOnboarding {
-            // Returning user: verify permissions are still granted
-            // (user may have revoked them in System Settings since last launch).
-            checkPermissions()
-        } else {
-            // First launch: onboarding walks the user through each permission
-            // step explicitly — don't race it with a background request here.
-            showOnboarding()
+        if !AXIsProcessTrusted() {
+            HotkeyMonitor.promptForAccessibility()
         }
-    }
-
-    func applicationWillTerminate(_ notification: Notification) {
-        ErrorLogger.shared.logInfo(category: .app, message: "Bolo shutting down")
-    }
-
-    // MARK: - Setup
-
-    private func setupComponents() {
-        // Initialize managers
-        dictionaryManager = DictionaryManager()
-        historyManager = HistoryManager()
-        audioCapture = MacOSAudioCapture()
-        audioCapture.delegate = self
-        textInsertion = MacOSTextInsertion()
-
-        // Initialize UI
-        menuBarController = MenuBarController(appState: appState, historyManager: historyManager)
-        floatingToolbar = FloatingToolbarController(appState: appState)
-
-        // Apply initial indicator style (floating pill, menu bar, or both)
-        applyIndicatorStyle(settings.indicatorStyle)
-
-        // Initialize transcription provider based on auth mode
-        refreshTranscriptionProvider()
-
-        // Setup hotkeys
-        setupHotkeys()
-
-        // Observe settings changes
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(settingsDidChange),
-            name: UserDefaults.didChangeNotification,
-            object: nil
+        hotkey.start(
+            onPress: {
+                Task { @MainActor in await DictationController.shared.pttPress() }
+            },
+            onRelease: {
+                Task { @MainActor in await DictationController.shared.pttRelease() }
+            }
         )
-    }
-
-    private func refreshTranscriptionProvider() {
-        switch settings.authMode {
-        case .geminiDirect:
-            guard !settings.apiKey.isEmpty else {
-                transcriptionProvider = nil
-                return
-            }
-            transcriptionProvider = GeminiClient(apiKey: settings.apiKey, model: settings.model)
-
-        case .vertexAI:
-            guard OAuthTokenManager.shared.isSignedIn,
-                  !settings.vertexProjectID.isEmpty else {
-                transcriptionProvider = nil
-                return
-            }
-            transcriptionProvider = VertexAIClient(
-                projectID: settings.vertexProjectID,
-                region: settings.vertexRegion,
-                model: settings.model
-            )
-        }
-    }
-
-    private var hotkeyStartSucceeded = false
-
-    private func setupHotkeys() {
-        hotkeyManager = MacOSHotkeyManager()
-
-        hotkeyManager.onPushToTalkStart = { [weak self] in
-            self?.startRecording(mode: .pushToTalk)
-        }
-
-        hotkeyManager.onPushToTalkEnd = { [weak self] in
-            self?.stopRecordingAndProcess()
-        }
-
-        hotkeyManager.onLongTalkToggle = { [weak self] in
-            self?.toggleLongTalk()
-        }
-
-        if hotkeyManager.start() {
-            hotkeyStartSucceeded = true
-            if hotkeyManager.usingEventTap {
-                logger.info("Hotkey manager started — using CGEvent tap (full functionality)")
-                ErrorLogger.shared.logInfo(category: .hotkey, message: "Hotkey manager started — CGEvent tap (full)")
-            } else {
-                logger.info("Hotkey manager started — using NSEvent monitors (fallback, limited)")
-                ErrorLogger.shared.logWarning(category: .hotkey, message: "Hotkey manager using NSEvent fallback (limited)")
-            }
-        } else {
-            hotkeyStartSucceeded = false
-            logger.error("Hotkey manager FAILED to start — no hotkey detection available")
-            ErrorLogger.shared.logError(category: .hotkey, message: "Hotkey manager FAILED to start — no hotkey detection")
-        }
-    }
-
-    private func checkPermissions() {
-        Task {
-            // Check microphone permission.
-            // Three possible states for returning users:
-            //   .authorized    → all good, do nothing
-            //   .notDetermined → was never asked or was reset; request now
-            //   .denied        → user revoked in System Settings; show alert
-            let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
-            if micStatus == .notDetermined {
-                let granted = await MacOSAudioCapture.requestPermission()
-                if !granted {
-                    ErrorLogger.shared.logError(category: .audio, message: "Microphone permission denied by user")
-                    await MainActor.run {
-                        appState.state = .error(.microphonePermissionDenied)
-                        showMicrophonePermissionAlert()
-                    }
-                }
-            } else if micStatus == .denied {
-                ErrorLogger.shared.logError(category: .audio, message: "Microphone permission previously denied — prompting user to fix")
-                await MainActor.run {
-                    appState.state = .error(.microphonePermissionDenied)
-                    showMicrophonePermissionAlert()
-                }
-            }
-
-            // If hotkeys completely failed (neither CGEvent nor NSEvent worked),
-            // prompt for Accessibility permission
-            if !hotkeyStartSucceeded {
-                logger.warning("Hotkey manager failed entirely — prompting for Accessibility permission")
-                ErrorLogger.shared.logError(category: .hotkey, message: "Accessibility permission denied — hotkeys unavailable")
-                MacOSHotkeyManager.requestAccessibilityPermission()
-                await MainActor.run {
-                    appState.state = .error(.accessibilityPermissionDenied)
-                }
-            } else if !hotkeyManager.usingEventTap {
-                // NSEvent fallback is active — hotkeys work but we should still
-                // request Accessibility for full text insertion capability.
-                // Don't block the app though; just prompt gently.
-                if !MacOSHotkeyManager.hasAccessibilityPermission() {
-                    logger.info("Using NSEvent fallback — requesting Accessibility for text insertion")
-                    MacOSHotkeyManager.requestAccessibilityPermission()
-                }
-            }
-
-            // Check authentication — if not configured, open settings to prompt setup
-            if !settings.hasValidAuth {
-                ErrorLogger.shared.logWarning(category: .api, message: "Authentication not configured — prompting user")
-                await MainActor.run {
-                    appState.state = .error(settings.authMode == .geminiDirect ? .apiKeyMissing : .authNotConfigured)
-                    menuBarController.openSettingsWindow()
-                }
-            }
-        }
-    }
-
-    /// Shows a prominent NSAlert when mic permission is missing on a returning launch.
-    /// Unlike the onboarding flow, returning users have no UI to guide them —
-    /// so we surface an alert with a direct "Open System Settings" button.
-    @MainActor
-    private func showMicrophonePermissionAlert() {
-        let alert = NSAlert()
-        alert.messageText = "Microphone Access Required"
-        alert.informativeText = "Bolo needs microphone access to transcribe your voice.\n\nOpen System Settings → Privacy & Security → Microphone and enable Bolo."
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Later")
-
-        NSApp.activate(ignoringOtherApps: true)
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            NSWorkspace.shared.open(
-                URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!
-            )
-        }
-    }
-
-    // MARK: - Recording Control
-
-    private func startRecording(mode: RecordingMode) {
-        Task { @MainActor in
-            logger.info("startRecording called — mode: \(String(describing: mode)), current state: \(String(describing: self.appState.state))")
-            guard case .idle = appState.state else {
-                logger.warning("startRecording aborted — state is not idle")
-                return
-            }
-
-            // Remember which app the user was in — we'll re-activate it for text insertion
-            targetApp = NSWorkspace.shared.frontmostApplication
-            logger.info("Target app for insertion: \(self.targetApp?.localizedName ?? "unknown")")
-
-            // Check if command mode should be used
-            let actualMode: RecordingMode
-            if mode == .pushToTalk,
-               settings.enableCommandMode,
-               let _ = textInsertion.getSelectedText() {
-                actualMode = .command
-            } else {
-                actualMode = mode
-            }
-
-            do {
-                logger.info("Starting audio capture — mode: \(String(describing: actualMode))")
-                ErrorLogger.shared.logInfo(category: .audio, message: "Starting audio capture — mode: \(actualMode)")
-                try audioCapture.startRecording()
-                appState.state = .recording(mode: actualMode)
-                appState.recordingDuration = 0
-
-                // Start duration timer
-                recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-                    guard let self else { return }
-                    Task { @MainActor in
-                        self.appState.recordingDuration += 0.1
-
-                        // Auto-stop at max duration
-                        if self.appState.recordingDuration >= self.settings.maxRecordingDuration {
-                            self.stopRecordingAndProcess()
-                        }
-                    }
-                }
-
-                menuBarController.updateIcon(for: appState.state)
-                if settings.indicatorStyle.showsFloatingPill {
-                    floatingToolbar.show()
-                }
-            } catch {
-                logger.error("Audio capture failed: \(error.localizedDescription)")
-                ErrorLogger.shared.logError(category: .audio, message: "Audio capture failed to start", error: error)
-                appState.state = .error(.microphonePermissionDenied)
-            }
-        }
-    }
-
-    private func stopRecordingAndProcess() {
-        Task { @MainActor in
-            logger.info("stopRecordingAndProcess called — current state: \(String(describing: self.appState.state))")
-            guard case .recording(let mode) = appState.state else {
-                logger.warning("stopRecordingAndProcess aborted — not recording")
-                return
-            }
-
-            // Stop timer
-            recordingTimer?.invalidate()
-            recordingTimer = nil
-
-            // Stop audio capture and get WAV data
-            let wavData = audioCapture.stopRecording()
-            appState.resetWaveform()
-
-            // Validate recording length
-            guard appState.recordingDuration > 0.3 else {
-                ErrorLogger.shared.logWarning(category: .audio, message: "Recording too short: \(appState.recordingDuration)s")
-                appState.state = .error(.audioTooShort)
-                resetToIdleAfterDelay()
-                return
-            }
-
-            guard let client = transcriptionProvider else {
-                ErrorLogger.shared.logError(category: .api, message: "No transcription provider — authentication not configured")
-                appState.state = .error(settings.authMode == .geminiDirect ? .apiKeyMissing : .authNotConfigured)
-                resetToIdleAfterDelay()
-                return
-            }
-
-            appState.state = .processing
-            menuBarController.updateIcon(for: appState.state)
-            logger.info("Sending \(wavData.count) bytes of audio to Gemini API")
-
-            do {
-                let resultText: String
-
-                switch mode {
-                case .pushToTalk, .longTalk:
-                    // Get context from active text field
-                    let context = textInsertion.getTextContext()
-                    let dictionary = dictionaryManager.getTopEntries()
-
-                    resultText = try await client.transcribe(
-                        audio: wavData,
-                        context: context,
-                        dictionary: dictionary
-                    )
-
-                case .command:
-                    // Get selected text for command mode
-                    guard let selectedText = textInsertion.getSelectedText() else {
-                        ErrorLogger.shared.logError(category: .insertion, message: "Command mode: no selected text available")
-                        appState.state = .error(.insertionFailed)
-                        resetToIdleAfterDelay()
-                        return
-                    }
-
-                    // The audio is the voice command
-                    // First transcribe the command
-                    let command = try await client.transcribe(audio: wavData, context: nil, dictionary: [])
-
-                    // Then process the command on the selected text
-                    resultText = try await client.processCommand(
-                        selectedText: selectedText,
-                        command: command
-                    )
-                }
-
-                logger.info("Transcription result: \(resultText.prefix(100))")
-                ErrorLogger.shared.logInfo(category: .app, message: "Transcription successful — \(resultText.count) chars, mode: \(mode)")
-
-                // Insert text
-                appState.state = .inserting
-
-                // Always copy to clipboard first as a safety net.
-                // If AX insertion works, the clipboard is a bonus backup.
-                // If it fails, the user can Cmd+V manually.
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.setString(resultText, forType: .string)
-                logger.info("Text copied to clipboard as safety net")
-
-                // Re-activate the app the user was in when they started recording.
-                // During the 2-3 seconds of API processing, focus may have shifted.
-                let target = self.targetApp
-                if let target, !target.isTerminated {
-                    logger.info("Re-activating target app: \(target.localizedName ?? "unknown") (PID \(target.processIdentifier))")
-                    target.activate()
-
-                    // Poll until the app is actually frontmost (up to 500ms)
-                    for _ in 0..<10 {
-                        try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
-                        if NSWorkspace.shared.frontmostApplication?.processIdentifier == target.processIdentifier {
-                            break
-                        }
-                    }
-                    // Extra settle time for the window to fully accept keyboard input
-                    try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
-                }
-
-                // Get target PID for direct event delivery to the correct process
-                let targetPID: pid_t? = (target != nil && !target!.isTerminated) ? target!.processIdentifier : nil
-
-                // Try AX-based text insertion if Accessibility is granted
-                let trusted = AXIsProcessTrusted()
-                logger.info("Attempting text insertion — AXIsProcessTrusted: \(trusted), targetPID: \(targetPID.map { String($0) } ?? "nil")")
-
-                if trusted {
-                    if case .command = mode {
-                        try textInsertion.replaceSelectedText(with: resultText, targetPID: targetPID)
-                    } else {
-                        try textInsertion.insertText(resultText, targetPID: targetPID)
-                    }
-                } else {
-                    // No Accessibility — show one-time alert
-                    showAccessibilityAlert(transcribedText: resultText)
-                }
-
-                // Save to transcription history
-                let appContext = textInsertion.getActiveAppContext()
-                let entry = TranscriptionResult(
-                    text: resultText,
-                    mode: mode,
-                    duration: appState.recordingDuration,
-                    appContext: appContext
-                ).toHistoryEntry()
-                historyManager.addEntry(entry)
-
-                // Update dictionary usage for recognized terms
-                for term in dictionaryManager.getTopEntries() {
-                    if resultText.localizedCaseInsensitiveContains(term) {
-                        dictionaryManager.incrementUsage(term: term)
-                    }
-                }
-
-                appState.state = .idle
-                menuBarController.updateIcon(for: appState.state)
-
-            } catch {
-                let appError: AppError
-                if let geminiError = error as? GeminiError {
-                    switch geminiError {
-                    case .invalidAPIKey:
-                        appError = .apiKeyMissing
-                    case .networkError:
-                        appError = .networkError
-                    case .apiError(let msg):
-                        appError = .apiError(msg)
-                    default:
-                        appError = .apiError(error.localizedDescription)
-                    }
-                } else if let vertexError = error as? VertexAIError {
-                    switch vertexError {
-                    case .notSignedIn:
-                        appError = .authNotConfigured
-                    case .tokenRefreshFailed:
-                        appError = .tokenExpired
-                    case .networkError:
-                        appError = .networkError
-                    case .accessDenied:
-                        appError = .apiError(vertexError.localizedDescription)
-                    case .apiError(let msg):
-                        appError = .apiError(msg)
-                    default:
-                        appError = .apiError(error.localizedDescription)
-                    }
-                } else {
-                    appError = .apiError(error.localizedDescription)
-                }
-
-                ErrorLogger.shared.logError(
-                    category: .app,
-                    message: "Recording pipeline failed: \(error.localizedDescription)",
-                    appState: String(describing: appError)
-                )
-                appState.state = .error(appError)
-                menuBarController.updateIcon(for: appState.state)
-                resetToIdleAfterDelay()
-            }
-        }
-    }
-
-    private func toggleLongTalk() {
-        Task { @MainActor in
-            if appState.isLongTalkActive {
-                // Stopping long talk
-                appState.isLongTalkActive = false
-                stopRecordingAndProcess()
-            } else {
-                // Starting long talk
-                appState.isLongTalkActive = true
-                startRecording(mode: .longTalk)
-            }
-        }
-    }
-
-    private func resetToIdleAfterDelay() {
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
-            if case .error = self.appState.state {
-                self.appState.state = .idle
-                self.menuBarController.updateIcon(for: self.appState.state)
-            }
-        }
-    }
-
-    // MARK: - AudioCaptureDelegate
-
-    nonisolated func audioCaptureDidReceiveBuffer(_ pcmData: Data) {
-        // Buffer handled internally by AudioCapture
-    }
-
-    nonisolated func audioCaptureDidUpdateLevel(_ level: Float) {
-        Task { @MainActor in
-            self.appState.pushAudioLevel(level)
-        }
-    }
-
-    nonisolated func audioCaptureDidFail(_ error: Error) {
-        ErrorLogger.shared.logError(category: .audio, message: "Audio capture delegate failure", error: error)
-        Task { @MainActor in
-            self.appState.state = .error(.microphonePermissionDenied)
-        }
-    }
-
-    // MARK: - Notifications
-
-    @objc private func settingsDidChange() {
-        refreshTranscriptionProvider()
-
-        // If the user just configured authentication, clear any auth error
-        // so recording can proceed. Without this, the state stays stuck in .error
-        // and startRecording() silently returns.
-        if settings.hasValidAuth {
-            if case .error(.apiKeyMissing) = appState.state {
-                logger.info("API key entered — resetting state from error to idle")
-                appState.state = .idle
-                menuBarController.updateIcon(for: appState.state)
-            } else if case .error(.authNotConfigured) = appState.state {
-                logger.info("Vertex AI auth configured — resetting state from error to idle")
-                appState.state = .idle
-                menuBarController.updateIcon(for: appState.state)
-            } else if case .error(.tokenExpired) = appState.state {
-                logger.info("Re-authenticated — resetting state from error to idle")
-                appState.state = .idle
-                menuBarController.updateIcon(for: appState.state)
-            }
-        }
-
-        // Apply indicator style changes
-        applyIndicatorStyle(settings.indicatorStyle)
-    }
-
-    // MARK: - Indicator Style
-
-    /// Apply the indicator style — show/hide floating pill and enable/disable live menu bar indicator.
-    private func applyIndicatorStyle(_ style: IndicatorStyle) {
-        if style.showsFloatingPill {
-            floatingToolbar.show()
-        } else {
-            floatingToolbar.hide()
-        }
-
-        if style.showsMenuBarIndicator {
-            menuBarController.enableLiveIndicator()
-        } else {
-            menuBarController.disableLiveIndicator()
-        }
-    }
-
-    // MARK: - Accessibility Alert
-
-    /// Shows a one-time alert explaining that Accessibility permission is needed
-    /// for text insertion. The transcribed text is already on the clipboard.
-    private var hasShownAccessibilityAlert = false
-
-    private func showAccessibilityAlert(transcribedText: String) {
-        // Copy is already done by the caller — just show the alert once
-        guard !hasShownAccessibilityAlert else {
-            // Subsequent times, just show a notification
-            logger.info("Text copied to clipboard (Accessibility still not granted)")
-            return
-        }
-        hasShownAccessibilityAlert = true
-
-        let alert = NSAlert()
-        alert.messageText = "Text Copied to Clipboard"
-        alert.informativeText = """
-        Your transcription was successful! The text has been copied to your clipboard — press Cmd+V to paste it.
-
-        To enable automatic text insertion, Bolo needs Accessibility permission:
-
-        1. Open System Settings → Privacy & Security → Accessibility
-        2. Click "+" and add Bolo from:
-           ~/Library/Developer/Xcode/DerivedData/Bolo-.../Build/Products/Debug/Bolo.app
-        3. Make sure the toggle is ON
-
-        After granting permission, Bolo will insert text directly at your cursor.
-        """
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "Open Accessibility Settings")
-        alert.addButton(withTitle: "OK")
-
-        NSApp.activate(ignoringOtherApps: true)
-        let response = alert.runModal()
-
-        if response == .alertFirstButtonReturn {
-            MacOSHotkeyManager.requestAccessibilityPermission()
-        }
-    }
-
-    // MARK: - Onboarding
-
-    private func showOnboarding() {
-        let onboardingView = OnboardingView()
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
-            styleMask: [.titled, .closable],
-            backing: .buffered,
-            defer: false
-        )
-        window.title = "Welcome to Bolo"
-        window.contentView = NSHostingView(rootView: onboardingView)
-        window.center()
-        window.isReleasedWhenClosed = false
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-        onboardingWindow = window
     }
 }

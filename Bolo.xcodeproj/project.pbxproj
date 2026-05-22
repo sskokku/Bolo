@@ -6,282 +6,290 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		09AD9F521C05E643A7BCC2C9 /* HistoryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8733F8D3F8A3B571F2FF57D5 /* HistoryEntry.swift */; };
-		0A54791ED890E34977E6C288 /* MenuBarIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FEB26B8E24610E8772D3820 /* MenuBarIndicatorView.swift */; };
-		0A836B5AABB050B1A5127725 /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C354676290F6F32A6574C8E /* HistoryManager.swift */; };
-		15961179C5D835012A7430AF /* DictionaryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C96D3BB9E02414C0BB32C9C5 /* DictionaryManager.swift */; };
-		2172158196D16CF243D4EF94 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3678DD668214388C9CE1BAB0 /* MenuBarController.swift */; };
-		2818B7114D8BAEF7CF8A4E94 /* ErrorLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66FC11CE8911CA6D10EEB90D /* ErrorLogger.swift */; };
-		35AC36AE06FD592C86F8CA96 /* TranscriptionResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED01A656896A5B17C7E5913F /* TranscriptionResult.swift */; };
-		38BA79C5F9443BD1DACF42EA /* DictionaryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCC470B51F901FB871CF1A4 /* DictionaryEntry.swift */; };
-		3BB1A24341DB05830306F7AF /* Bolo-Icon.svg in Resources */ = {isa = PBXBuildFile; fileRef = 13DF340DCB46D7FE00373026 /* Bolo-Icon.svg */; };
-		4606189AC10186C22E178924 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A81D5296D4284D17EC85F6D3 /* SettingsView.swift */; };
-		463F2EFDE60371B2E8B16564 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C6CE109D78E4E7F847135E /* AppState.swift */; };
-		4D9646DC88632ED8540995AA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD9EDDB796988A13C1F9BDAA /* Assets.xcassets */; };
-		66108E0761D723EF85EB6F31 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 24E0B852292C6241AF53EBFE /* PrivacyInfo.xcprivacy */; };
-		661369681F5ED693CB47C0E5 /* BoloApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F20CCBD2500B27CD0B3907 /* BoloApp.swift */; };
-		6B92680170B4A72373CDF616 /* AudioProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94BBA41DF3195F7FB1898776 /* AudioProcessor.swift */; };
-		8DC62A62FB3092F3118DAE97 /* DictionaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B055BBF3096C9B746080CCE4 /* DictionaryView.swift */; };
-		9F1BB66F4B4776C2CBC093D9 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E90347294BAFC27BE1D0428 /* HotkeyManager.swift */; };
-		ABF0B54807430E3CBF83E983 /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE88E61994944BD70BCE1C10 /* AudioCapture.swift */; };
-		B29F5289FB0B542828F4CCA4 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B75F04D918BE25D45AC9EF84 /* HistoryView.swift */; };
-		DFEBAB6509761DDE80103F94 /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 711DC145B32EAA3F1A37A117 /* GeminiClient.swift */; };
-		E27F283DABA9EE0373D91FD7 /* FloatingToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE370038657FB147E8545F2 /* FloatingToolbar.swift */; };
-		E4EBA6114A915152B484B684 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC906FD27136AAE22AFCD171 /* SettingsModel.swift */; };
-		EDCEE448510AEF6C171969D6 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 589C5443017029E8A759E6D0 /* OnboardingView.swift */; };
-		F380F0940AA03BE760674C66 /* TextInsertion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12C3EF136E908A113369C5E0 /* TextInsertion.swift */; };
-		3AB45758853D2F3786B61D0A /* AuthMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B587F5F3E3F88591A6CD7F9 /* AuthMode.swift */; };
-		5BF527F72CEAE8F35096F2E6 /* OAuthTokenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4FE3407E84EAC315E64B76F /* OAuthTokenManager.swift */; };
-		E69B364BB8DEFF80671C5391 /* OAuthSignInHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A62D0EF9551431E51698EC /* OAuthSignInHandler.swift */; };
-		7B9139575E4DFE006E0FBE1D /* VertexAIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E1DBAF4CE7540C003D69CF /* VertexAIClient.swift */; };
-/* End PBXBuildFile section */
+/* Begin PBXContainerItemProxy section */
+		E64B55512FB5609D00B87007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E64B55392FB5609B00B87007 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E64B55402FB5609B00B87007;
+			remoteInfo = Bolo;
+		};
+		E64B555B2FB5609D00B87007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E64B55392FB5609B00B87007 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E64B55402FB5609B00B87007;
+			remoteInfo = Bolo;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0FEB26B8E24610E8772D3820 /* MenuBarIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarIndicatorView.swift; sourceTree = "<group>"; };
-		12C3EF136E908A113369C5E0 /* TextInsertion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInsertion.swift; sourceTree = "<group>"; };
-		13DF340DCB46D7FE00373026 /* Bolo-Icon.svg */ = {isa = PBXFileReference; path = "Bolo-Icon.svg"; sourceTree = "<group>"; };
-		24E0B852292C6241AF53EBFE /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		2583510F395154C8336E6460 /* Bolo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Bolo.entitlements; sourceTree = "<group>"; };
-		25F20CCBD2500B27CD0B3907 /* BoloApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoloApp.swift; sourceTree = "<group>"; };
-		2EE370038657FB147E8545F2 /* FloatingToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingToolbar.swift; sourceTree = "<group>"; };
-		3678DD668214388C9CE1BAB0 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
-		4E90347294BAFC27BE1D0428 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
-		589C5443017029E8A759E6D0 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		66FC11CE8911CA6D10EEB90D /* ErrorLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorLogger.swift; sourceTree = "<group>"; };
-		6BCC470B51F901FB871CF1A4 /* DictionaryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryEntry.swift; sourceTree = "<group>"; };
-		711DC145B32EAA3F1A37A117 /* GeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
-		8733F8D3F8A3B571F2FF57D5 /* HistoryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEntry.swift; sourceTree = "<group>"; };
-		8C354676290F6F32A6574C8E /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManager.swift; sourceTree = "<group>"; };
-		94BBA41DF3195F7FB1898776 /* AudioProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioProcessor.swift; sourceTree = "<group>"; };
-		A81D5296D4284D17EC85F6D3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		B055BBF3096C9B746080CCE4 /* DictionaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryView.swift; sourceTree = "<group>"; };
-		B75F04D918BE25D45AC9EF84 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
-		C1C6CE109D78E4E7F847135E /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
-		C96D3BB9E02414C0BB32C9C5 /* DictionaryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryManager.swift; sourceTree = "<group>"; };
-		CC906FD27136AAE22AFCD171 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
-		DD9EDDB796988A13C1F9BDAA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		EB6F884BE5C1E2ECC8EC0B52 /* Bolo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bolo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		ED01A656896A5B17C7E5913F /* TranscriptionResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionResult.swift; sourceTree = "<group>"; };
-		FE88E61994944BD70BCE1C10 /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
-		4B587F5F3E3F88591A6CD7F9 /* AuthMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthMode.swift; sourceTree = "<group>"; };
-		A4FE3407E84EAC315E64B76F /* OAuthTokenManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthTokenManager.swift; sourceTree = "<group>"; };
-		97A62D0EF9551431E51698EC /* OAuthSignInHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthSignInHandler.swift; sourceTree = "<group>"; };
-		D6E1DBAF4CE7540C003D69CF /* VertexAIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VertexAIClient.swift; sourceTree = "<group>"; };
+		E64B55412FB5609B00B87007 /* Bolo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bolo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E64B55502FB5609D00B87007 /* BoloTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BoloTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E64B555A2FB5609D00B87007 /* BoloUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BoloUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXGroup section */
-		2AF6AA2FF6FE5797AC7D48CD /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				EB6F884BE5C1E2ECC8EC0B52 /* Bolo.app */,
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E64B55E02FBB9DE900B87007 /* Exceptions for "Bolo" folder in "Bolo" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
 			);
-			name = Products;
-			sourceTree = "<group>";
+			target = E64B55402FB5609B00B87007 /* Bolo */;
 		};
-		42648131006F8D2A96218308 = {
-			isa = PBXGroup;
-			children = (
-				848A200199479B85F85A3529 /* Bolo */,
-				2AF6AA2FF6FE5797AC7D48CD /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		4B6DEF0AD898DF7B2029A881 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				6BCC470B51F901FB871CF1A4 /* DictionaryEntry.swift */,
-				8733F8D3F8A3B571F2FF57D5 /* HistoryEntry.swift */,
-				ED01A656896A5B17C7E5913F /* TranscriptionResult.swift */,
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
-		5A97DFFA4B2C06175A073922 /* Core */ = {
-			isa = PBXGroup;
-			children = (
-				C1C6CE109D78E4E7F847135E /* AppState.swift */,
-				94BBA41DF3195F7FB1898776 /* AudioProcessor.swift */,
-				C96D3BB9E02414C0BB32C9C5 /* DictionaryManager.swift */,
-				66FC11CE8911CA6D10EEB90D /* ErrorLogger.swift */,
-				711DC145B32EAA3F1A37A117 /* GeminiClient.swift */,
-				8C354676290F6F32A6574C8E /* HistoryManager.swift */,
-				CC906FD27136AAE22AFCD171 /* SettingsModel.swift */,
-				4B587F5F3E3F88591A6CD7F9 /* AuthMode.swift */,
-				A4FE3407E84EAC315E64B76F /* OAuthTokenManager.swift */,
-				97A62D0EF9551431E51698EC /* OAuthSignInHandler.swift */,
-				D6E1DBAF4CE7540C003D69CF /* VertexAIClient.swift */,
-			);
-			path = Core;
-			sourceTree = "<group>";
-		};
-		5E3B661028338628E19730E0 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				DD9EDDB796988A13C1F9BDAA /* Assets.xcassets */,
-				13DF340DCB46D7FE00373026 /* Bolo-Icon.svg */,
-			);
-			path = Resources;
-			sourceTree = "<group>";
-		};
-		848A200199479B85F85A3529 /* Bolo */ = {
-			isa = PBXGroup;
-			children = (
-				5A97DFFA4B2C06175A073922 /* Core */,
-				4B6DEF0AD898DF7B2029A881 /* Models */,
-				ABD54DC9F0AA1E35783A10D3 /* Platform */,
-				5E3B661028338628E19730E0 /* Resources */,
-				CB7E0F46907D8405F7563C8E /* Views */,
-				2583510F395154C8336E6460 /* Bolo.entitlements */,
-				25F20CCBD2500B27CD0B3907 /* BoloApp.swift */,
-				24E0B852292C6241AF53EBFE /* PrivacyInfo.xcprivacy */,
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		E64B55432FB5609B00B87007 /* Bolo */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E64B55E02FBB9DE900B87007 /* Exceptions for "Bolo" folder in "Bolo" target */,
 			);
 			path = Bolo;
 			sourceTree = "<group>";
 		};
-		ABD54DC9F0AA1E35783A10D3 /* Platform */ = {
-			isa = PBXGroup;
-			children = (
-				B1F84B924E8430D30EDB1563 /* macOS */,
-			);
-			path = Platform;
+		E64B55532FB5609D00B87007 /* BoloTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BoloTests;
 			sourceTree = "<group>";
 		};
-		B1F84B924E8430D30EDB1563 /* macOS */ = {
-			isa = PBXGroup;
-			children = (
-				FE88E61994944BD70BCE1C10 /* AudioCapture.swift */,
-				2EE370038657FB147E8545F2 /* FloatingToolbar.swift */,
-				4E90347294BAFC27BE1D0428 /* HotkeyManager.swift */,
-				3678DD668214388C9CE1BAB0 /* MenuBarController.swift */,
-				12C3EF136E908A113369C5E0 /* TextInsertion.swift */,
-			);
-			path = macOS;
+		E64B555D2FB5609D00B87007 /* BoloUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BoloUITests;
 			sourceTree = "<group>";
 		};
-		CB7E0F46907D8405F7563C8E /* Views */ = {
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E64B553E2FB5609B00B87007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E64B554D2FB5609D00B87007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E64B55572FB5609D00B87007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E64B55382FB5609B00B87007 = {
 			isa = PBXGroup;
 			children = (
-				B055BBF3096C9B746080CCE4 /* DictionaryView.swift */,
-				B75F04D918BE25D45AC9EF84 /* HistoryView.swift */,
-				0FEB26B8E24610E8772D3820 /* MenuBarIndicatorView.swift */,
-				589C5443017029E8A759E6D0 /* OnboardingView.swift */,
-				A81D5296D4284D17EC85F6D3 /* SettingsView.swift */,
+				E64B55432FB5609B00B87007 /* Bolo */,
+				E64B55532FB5609D00B87007 /* BoloTests */,
+				E64B555D2FB5609D00B87007 /* BoloUITests */,
+				E64B55422FB5609B00B87007 /* Products */,
 			);
-			path = Views;
+			sourceTree = "<group>";
+		};
+		E64B55422FB5609B00B87007 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E64B55412FB5609B00B87007 /* Bolo.app */,
+				E64B55502FB5609D00B87007 /* BoloTests.xctest */,
+				E64B555A2FB5609D00B87007 /* BoloUITests.xctest */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		28E90267D9B070FCA016C57C /* Bolo */ = {
+		E64B55402FB5609B00B87007 /* Bolo */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 9AB937F9EA8968349A7FFA2E /* Build configuration list for PBXNativeTarget "Bolo" */;
+			buildConfigurationList = E64B55642FB5609D00B87007 /* Build configuration list for PBXNativeTarget "Bolo" */;
 			buildPhases = (
-				528664F2382B09A0861E26F7 /* Sources */,
-				1713587171805202367C9A37 /* Resources */,
+				E64B553D2FB5609B00B87007 /* Sources */,
+				E64B553E2FB5609B00B87007 /* Frameworks */,
+				E64B553F2FB5609B00B87007 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				E64B55432FB5609B00B87007 /* Bolo */,
+			);
 			name = Bolo;
 			packageProductDependencies = (
 			);
 			productName = Bolo;
-			productReference = EB6F884BE5C1E2ECC8EC0B52 /* Bolo.app */;
+			productReference = E64B55412FB5609B00B87007 /* Bolo.app */;
 			productType = "com.apple.product-type.application";
+		};
+		E64B554F2FB5609D00B87007 /* BoloTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E64B55672FB5609D00B87007 /* Build configuration list for PBXNativeTarget "BoloTests" */;
+			buildPhases = (
+				E64B554C2FB5609D00B87007 /* Sources */,
+				E64B554D2FB5609D00B87007 /* Frameworks */,
+				E64B554E2FB5609D00B87007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E64B55522FB5609D00B87007 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E64B55532FB5609D00B87007 /* BoloTests */,
+			);
+			name = BoloTests;
+			packageProductDependencies = (
+			);
+			productName = BoloTests;
+			productReference = E64B55502FB5609D00B87007 /* BoloTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E64B55592FB5609D00B87007 /* BoloUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E64B556A2FB5609D00B87007 /* Build configuration list for PBXNativeTarget "BoloUITests" */;
+			buildPhases = (
+				E64B55562FB5609D00B87007 /* Sources */,
+				E64B55572FB5609D00B87007 /* Frameworks */,
+				E64B55582FB5609D00B87007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E64B555C2FB5609D00B87007 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E64B555D2FB5609D00B87007 /* BoloUITests */,
+			);
+			name = BoloUITests;
+			packageProductDependencies = (
+			);
+			productName = BoloUITests;
+			productReference = E64B555A2FB5609D00B87007 /* BoloUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		7C48C1359814370FDCBBD191 /* Project object */ = {
+		E64B55392FB5609B00B87007 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1600;
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
-					28E90267D9B070FCA016C57C = {
-						DevelopmentTeam = KJ47YGNM8Z;
+					E64B55402FB5609B00B87007 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					E64B554F2FB5609D00B87007 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = E64B55402FB5609B00B87007;
+					};
+					E64B55592FB5609D00B87007 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = E64B55402FB5609B00B87007;
 					};
 				};
 			};
-			buildConfigurationList = EDB778F142F9B633EE6E7915 /* Build configuration list for PBXProject "Bolo" */;
-			compatibilityVersion = "Xcode 14.0";
+			buildConfigurationList = E64B553C2FB5609B00B87007 /* Build configuration list for PBXProject "Bolo" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				Base,
 				en,
+				Base,
 			);
-			mainGroup = 42648131006F8D2A96218308;
+			mainGroup = E64B55382FB5609B00B87007;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			productRefGroup = E64B55422FB5609B00B87007 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				28E90267D9B070FCA016C57C /* Bolo */,
+				E64B55402FB5609B00B87007 /* Bolo */,
+				E64B554F2FB5609D00B87007 /* BoloTests */,
+				E64B55592FB5609D00B87007 /* BoloUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		1713587171805202367C9A37 /* Resources */ = {
+		E64B553F2FB5609B00B87007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4D9646DC88632ED8540995AA /* Assets.xcassets in Resources */,
-				3BB1A24341DB05830306F7AF /* Bolo-Icon.svg in Resources */,
-				66108E0761D723EF85EB6F31 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E64B554E2FB5609D00B87007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E64B55582FB5609D00B87007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		528664F2382B09A0861E26F7 /* Sources */ = {
+		E64B553D2FB5609B00B87007 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				463F2EFDE60371B2E8B16564 /* AppState.swift in Sources */,
-				ABF0B54807430E3CBF83E983 /* AudioCapture.swift in Sources */,
-				6B92680170B4A72373CDF616 /* AudioProcessor.swift in Sources */,
-				661369681F5ED693CB47C0E5 /* BoloApp.swift in Sources */,
-				38BA79C5F9443BD1DACF42EA /* DictionaryEntry.swift in Sources */,
-				15961179C5D835012A7430AF /* DictionaryManager.swift in Sources */,
-				8DC62A62FB3092F3118DAE97 /* DictionaryView.swift in Sources */,
-				2818B7114D8BAEF7CF8A4E94 /* ErrorLogger.swift in Sources */,
-				E27F283DABA9EE0373D91FD7 /* FloatingToolbar.swift in Sources */,
-				DFEBAB6509761DDE80103F94 /* GeminiClient.swift in Sources */,
-				09AD9F521C05E643A7BCC2C9 /* HistoryEntry.swift in Sources */,
-				0A836B5AABB050B1A5127725 /* HistoryManager.swift in Sources */,
-				B29F5289FB0B542828F4CCA4 /* HistoryView.swift in Sources */,
-				9F1BB66F4B4776C2CBC093D9 /* HotkeyManager.swift in Sources */,
-				2172158196D16CF243D4EF94 /* MenuBarController.swift in Sources */,
-				0A54791ED890E34977E6C288 /* MenuBarIndicatorView.swift in Sources */,
-				EDCEE448510AEF6C171969D6 /* OnboardingView.swift in Sources */,
-				E4EBA6114A915152B484B684 /* SettingsModel.swift in Sources */,
-				4606189AC10186C22E178924 /* SettingsView.swift in Sources */,
-				F380F0940AA03BE760674C66 /* TextInsertion.swift in Sources */,
-				35AC36AE06FD592C86F8CA96 /* TranscriptionResult.swift in Sources */,
-				3AB45758853D2F3786B61D0A /* AuthMode.swift in Sources */,
-				5BF527F72CEAE8F35096F2E6 /* OAuthTokenManager.swift in Sources */,
-				E69B364BB8DEFF80671C5391 /* OAuthSignInHandler.swift in Sources */,
-				7B9139575E4DFE006E0FBE1D /* VertexAIClient.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E64B554C2FB5609D00B87007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E64B55562FB5609D00B87007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		E64B55522FB5609D00B87007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E64B55402FB5609B00B87007 /* Bolo */;
+			targetProxy = E64B55512FB5609D00B87007 /* PBXContainerItemProxy */;
+		};
+		E64B555C2FB5609D00B87007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E64B55402FB5609B00B87007 /* Bolo */;
+			targetProxy = E64B555B2FB5609D00B87007 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
-		541009F341FD21B92AF1675E /* Release */ = {
+		E64B55622FB5609D00B87007 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -308,96 +316,18 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bolo.app;
-				PRODUCT_NAME = Bolo;
-				SDKROOT = macosx;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 6.0;
-			};
-			name = Release;
-		};
-		6BD463F80BEE0BEE0B116185 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Bolo/Bolo.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = KJ47YGNM8Z;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Bolo/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.bolo.app;
-				SDKROOT = macosx;
-				SWIFT_STRICT_CONCURRENCY = complete;
-			};
-			name = Debug;
-		};
-		9996556331C6736E6A0BB63D /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_HARDENED_RUNTIME = YES;
+				DEVELOPMENT_TEAM = KJ47YGNM8Z;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"$(inherited)",
 					"DEBUG=1",
+					"$(inherited)",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -405,61 +335,265 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bolo.app;
-				PRODUCT_NAME = Bolo;
 				SDKROOT = macosx;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
-		B4B768F79676BD954BD8EEBE /* Release */ = {
+		E64B55632FB5609D00B87007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = KJ47YGNM8Z;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.4;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		E64B55652FB5609D00B87007 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Bolo/Bolo.entitlements;
-				CODE_SIGN_IDENTITY = "Developer ID Application: Sashidhar Kokku (KJ47YGNM8Z)";
-				CODE_SIGN_STYLE = Manual;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KJ47YGNM8Z;
-				GENERATE_INFOPLIST_FILE = NO;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Bolo/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.bolo.app;
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				SDKROOT = macosx;
-				SWIFT_STRICT_CONCURRENCY = complete;
+				INFOPLIST_KEY_CFBundleDisplayName = "Bolo Dev";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Bolo needs microphone access to transcribe your speech.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Bolo transcribes your speech on-device using the macOS Speech framework.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = skokku.Bolo.dev;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E64B55662FB5609D00B87007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KJ47YGNM8Z;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Bolo/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Bolo;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Bolo needs microphone access to transcribe your speech.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Bolo transcribes your speech on-device using the macOS Speech framework.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = skokku.Bolo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E64B55682FB5609D00B87007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KJ47YGNM8Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = skokku.BoloTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Bolo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Bolo";
+			};
+			name = Debug;
+		};
+		E64B55692FB5609D00B87007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KJ47YGNM8Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = skokku.BoloTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Bolo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Bolo";
+			};
+			name = Release;
+		};
+		E64B556B2FB5609D00B87007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KJ47YGNM8Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = skokku.BoloUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Bolo;
+			};
+			name = Debug;
+		};
+		E64B556C2FB5609D00B87007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KJ47YGNM8Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = skokku.BoloUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Bolo;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9AB937F9EA8968349A7FFA2E /* Build configuration list for PBXNativeTarget "Bolo" */ = {
+		E64B553C2FB5609B00B87007 /* Build configuration list for PBXProject "Bolo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				6BD463F80BEE0BEE0B116185 /* Debug */,
-				B4B768F79676BD954BD8EEBE /* Release */,
+				E64B55622FB5609D00B87007 /* Debug */,
+				E64B55632FB5609D00B87007 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
+			defaultConfigurationName = Release;
 		};
-		EDB778F142F9B633EE6E7915 /* Build configuration list for PBXProject "Bolo" */ = {
+		E64B55642FB5609D00B87007 /* Build configuration list for PBXNativeTarget "Bolo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9996556331C6736E6A0BB63D /* Debug */,
-				541009F341FD21B92AF1675E /* Release */,
+				E64B55652FB5609D00B87007 /* Debug */,
+				E64B55662FB5609D00B87007 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
+			defaultConfigurationName = Release;
+		};
+		E64B55672FB5609D00B87007 /* Build configuration list for PBXNativeTarget "BoloTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E64B55682FB5609D00B87007 /* Debug */,
+				E64B55692FB5609D00B87007 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E64B556A2FB5609D00B87007 /* Build configuration list for PBXNativeTarget "BoloUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E64B556B2FB5609D00B87007 /* Debug */,
+				E64B556C2FB5609D00B87007 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 7C48C1359814370FDCBBD191 /* Project object */;
+	rootObject = E64B55392FB5609B00B87007 /* Project object */;
 }

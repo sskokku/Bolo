@@ -1,56 +1,44 @@
-# Xcode
-build/
-DerivedData/
-*.xcuserstate
-*.xcworkspace
-!*.xcodeproj/project.xcworkspace/
-xcuserdata/
-*.xccheckout
-*.moved-aside
-*.hmap
-*.ipa
-*.dSYM.zip
-*.dSYM
-
-# Swift Package Manager
-.build/
-Packages/
-Package.pins
-Package.resolved
-*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
-
-# CocoaPods (if ever used)
-Pods/
-
 # macOS
 .DS_Store
-.AppleDouble
-.LSOverride
-._*
 
-# Thumbnails
-Thumbs.db
+# Xcode user-specific
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+*.xcscmblueprint
+*.xccheckout
 
-# IDE
+# Xcode build artifacts
+build/
+DerivedData/
+Products/
+*.app
+*.xctest
+*.dSYM
+*.dSYM.zip
+*.ipa
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Package.resolved
+Packages/
+
+# CocoaPods (not used, but ignore just in case)
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Misc
+*.log
 *.swp
-*.swo
-*~
-.idea/
-.vscode/
-
-# Secrets - never commit API keys
-*.env
-.env.*
-secrets.json
-*.dat
-*.key
-*.pem
-*.credential*
-*api_key*
-
-# Build artifacts / distribution
-dist/
-
-# XcodeGen
-# Keep project.yml but ignore generated project
-# Bolo.xcodeproj is generated and can be regenerated
+*.bak
+.env
+.env.local
